@@ -2,7 +2,7 @@
 
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
-import { Renderer } from '@json-render/react';
+import { JSONUIProvider, Renderer } from '@json-render/react';
 import { useEffect, useState } from 'react';
 
 import {
@@ -32,7 +32,9 @@ const PreviewPage = () => {
   return (
     <div className="bg-bg-base text-fg-base min-h-dvh p-6">
       {spec ? (
-        <Renderer spec={spec} registry={arteOdysseyAdapter.registry} />
+        <JSONUIProvider registry={arteOdysseyAdapter.registry}>
+          <Renderer spec={spec} registry={arteOdysseyAdapter.registry} />
+        </JSONUIProvider>
       ) : (
         <p className="text-fg-mute">Waiting for a spec from the parent…</p>
       )}
