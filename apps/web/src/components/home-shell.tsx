@@ -1,27 +1,20 @@
 'use client';
 
-import { useChatUI } from '@json-render/react';
 import { Heading } from '@k8o/arte-odyssey';
 
+import { useDecoroChat } from '../lib/use-decoro-chat.ts';
 import { type ChatMessage, ChatPane } from './chat-pane.tsx';
 import { PreviewFrame } from './preview-frame.tsx';
 
 /**
- * Top-level client shell for `/`. Wires the chat pane (user prompts) to
- * `useChatUI` (which posts `{messages}` to /api/generate, parses the
- * incremental json-render patch stream embedded in AI SDK's UI message
- * stream, and exposes one Spec per assistant turn) and forwards the latest
- * Spec into the iframe via PreviewFrame.
+ * Top-level client shell for `/`. Wires the chat pane to `useDecoroChat`,
+ * which posts `{ messages, currentSpec }` to /api/generate so each follow-up
+ * iterates on the existing spec instead of regenerating from scratch (M8).
  */
 export const HomeShell = () => {
-  const { messages, isStreaming, error, send } = useChatUI({
+  const { messages, spec, isStreaming, error, send } = useDecoroChat({
     api: '/api/generate',
   });
-
-  const latestSpec =
-    [...messages]
-      .toReversed()
-      .find((m) => m.role === 'assistant' && m.spec !== null)?.spec ?? null;
 
   const chatMessages: ChatMessage[] = messages.map((m) => ({
     id: m.id,
@@ -56,7 +49,7 @@ export const HomeShell = () => {
             <Heading type="h2">Preview</Heading>
           </div>
           <div className="flex-1 overflow-hidden">
-            <PreviewFrame spec={latestSpec} />
+            <PreviewFrame spec={spec} />
           </div>
         </section>
       </div>
