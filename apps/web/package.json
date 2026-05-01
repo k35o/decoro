@@ -14,6 +14,8 @@
   "dependencies": {
     "@decoro/adapter-arte-odyssey": "workspace:^",
     "@decoro/adapter-spec": "workspace:^",
+    "@json-render/core": "0.18.0",
+    "@json-render/react": "0.18.0",
     "@k8o/arte-odyssey": "7.0.1",
     "next": "16.2.4",
     "react": "catalog:",
