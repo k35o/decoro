@@ -1,4 +1,4 @@
-import { base, fmt, test } from '@k8o/oxc-config';
+import { fmt, nextjs, tailwind, test } from '@k8o/oxc-config';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
@@ -7,10 +7,13 @@ export default defineConfig({
     ignorePatterns: ['CHANGELOG.md', '.claude/**', 'pnpm-lock.yaml'],
   },
   lint: {
-    extends: [base],
-    ignorePatterns: ['CHANGELOG.md', '.claude/**'],
+    extends: [nextjs, tailwind],
+    ignorePatterns: ['CHANGELOG.md', '.claude/**', '**/.next/**'],
     options: {
       reportUnusedDisableDirectives: 'error',
+    },
+    settings: {
+      react: { version: '19.2.5' },
     },
     overrides: [
       {
