@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { isAllowedClassName } from './class-name-allowlist.ts';
 import { arteOdysseyAdapter } from './index.ts';
 
 const fakeRenderProps = <P,>(element: { type: string; props: P }) => ({
@@ -141,5 +142,89 @@ describe('adapter-arte-odyssey', () => {
       ),
     );
     expect(html).toContain('Submit');
+  });
+
+  describe('layout HTML elements (ADR-012)', () => {
+    it('exposes div / section / header / main in the registry', () => {
+      expect(arteOdysseyAdapter.registry).toHaveProperty('div');
+      expect(arteOdysseyAdapter.registry).toHaveProperty('section');
+      expect(arteOdysseyAdapter.registry).toHaveProperty('header');
+      expect(arteOdysseyAdapter.registry).toHaveProperty('main');
+    });
+
+    it('renders div via the registry with a passed className', () => {
+      const DivRenderer = arteOdysseyAdapter.registry['div']!;
+      const html = renderToStaticMarkup(
+        createElement(
+          DivRenderer,
+          fakeRenderProps({
+            type: 'div',
+            props: { className: 'flex flex-col gap-4' },
+          }),
+          'pane',
+        ),
+      );
+      expect(html).toBe('<div class="flex flex-col gap-4">pane</div>');
+    });
+
+    it('emits HTML elements verbatim in generated TSX (no import line)', () => {
+      const tsx = arteOdysseyAdapter.codeOutput.generate({
+        root: 'shell',
+        elements: {
+          shell: {
+            type: 'div',
+            props: { className: 'flex flex-col gap-4 p-6' },
+            children: ['btn'],
+          },
+          btn: {
+            type: 'Button',
+            props: {
+              label: 'Save',
+              type: null,
+              size: null,
+              color: null,
+              variant: null,
+              fullWidth: null,
+              disabled: null,
+            },
+            children: [],
+          },
+        },
+      });
+      // Only ArteOdyssey components (Button) belong in the import line; div
+      // is native HTML and stays out of it.
+      expect(tsx).toContain("import { Button } from '@k8o/arte-odyssey';");
+      expect(tsx).not.toContain(', div');
+      expect(tsx).not.toContain('div }');
+      expect(tsx).toContain('<div className="flex flex-col gap-4 p-6">');
+      expect(tsx).toContain('</div>');
+    });
+
+    it('emits a self-closing tag when className is null and there are no children', () => {
+      const tsx = arteOdysseyAdapter.codeOutput.generate({
+        root: 'spacer',
+        elements: {
+          spacer: { type: 'section', props: { className: null }, children: [] },
+        },
+      });
+      expect(tsx).toContain('<section />');
+    });
+  });
+
+  describe('className allowlist (ADR-012)', () => {
+    it('accepts curated layout utilities', () => {
+      expect(isAllowedClassName('flex')).toBe(true);
+      expect(isAllowedClassName('flex flex-col gap-4 p-6')).toBe(true);
+      expect(isAllowedClassName('w-full bg-bg-base text-fg-base')).toBe(true);
+      expect(isAllowedClassName('  flex   gap-2  ')).toBe(true);
+      expect(isAllowedClassName('')).toBe(true);
+    });
+
+    it('rejects raw palette / arbitrary / off-token utilities', () => {
+      expect(isAllowedClassName('bg-red-500')).toBe(false);
+      expect(isAllowedClassName('text-9xl')).toBe(false);
+      expect(isAllowedClassName('gap-[37px]')).toBe(false);
+      expect(isAllowedClassName('flex bg-red-500')).toBe(false);
+    });
   });
 });

@@ -19,6 +19,37 @@ type Formatter = (
 ) => string;
 
 /**
+ * Native HTML element types (per ADR-012). Anything in this set is emitted
+ * verbatim as a lowercase tag and never appears in the import line.
+ */
+const HTML_TAGS = new Set(['div', 'section', 'header', 'main']);
+
+/**
+ * Factory for ADR-012 layout HTML element formatters. The Zod refinement on
+ * `className` runs upstream, so by the time we land here the value is
+ * guaranteed to be either `null` or a safe, allowlist-checked utility string
+ * (no quotes, no JSX-significant characters); we can interpolate it into a
+ * `className="…"` attribute without further escaping.
+ */
+const layoutElementFormatter =
+  (tag: string): Formatter =>
+  (element, renderedChildren, depth) => {
+    const { className } = element.props as { className?: unknown };
+    const classNameAttr =
+      typeof className === 'string' && className.length > 0
+        ? ` className="${className}"`
+        : '';
+    if (renderedChildren.length === 0) {
+      return `${pad(depth)}<${tag}${classNameAttr} />`;
+    }
+    return [
+      `${pad(depth)}<${tag}${classNameAttr}>`,
+      ...renderedChildren,
+      `${pad(depth)}</${tag}>`,
+    ].join('\n');
+  };
+
+/**
  * Per-component formatters. Each one knows the gap between the AI-facing
  * Catalog shape (e.g. Button taking `label` as a prop) and the real
  * ArteOdyssey component shape (Button taking children).
@@ -59,6 +90,10 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}</Card>`,
     ].join('\n');
   },
+  div: layoutElementFormatter('div'),
+  section: layoutElementFormatter('section'),
+  header: layoutElementFormatter('header'),
+  main: layoutElementFormatter('main'),
 };
 
 const MAX_DEPTH = 64;
@@ -107,16 +142,20 @@ const generate = (spec: Spec): string => {
   const usedTypes = new Set<string>();
   const body = renderElement(spec, spec.root, 1, new Set<string>(), usedTypes);
   if (usedTypes.size === 0) return '';
-  const used = [...usedTypes].toSorted();
-  const importLine = `import { ${used.join(', ')} } from '${importPath}';`;
-  return [
-    importLine,
-    '',
-    'export const GeneratedComponent = () => (',
-    body,
-    ');',
-    '',
-  ].join('\n');
+  // Native HTML tags (ADR-012) need no import; only ArteOdyssey components
+  // appear in the import line.
+  const componentImports = [...usedTypes]
+    .filter((t) => !HTML_TAGS.has(t))
+    .toSorted();
+  const lines: string[] = [];
+  if (componentImports.length > 0) {
+    lines.push(
+      `import { ${componentImports.join(', ')} } from '${importPath}';`,
+      '',
+    );
+  }
+  lines.push('export const GeneratedComponent = () => (', body, ');', '');
+  return lines.join('\n');
 };
 
 export const codeOutput: AdapterCodeOutput = {
