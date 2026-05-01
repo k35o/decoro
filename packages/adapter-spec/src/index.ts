@@ -22,11 +22,22 @@ export type AdapterRegistry<TComponent = unknown> = Record<string, TComponent>;
 /**
  * Hooks an adapter exposes for turning a `json-render` Spec into TSX.
  *
+ * **MVP-only contract.** Today this shape assumes a single TSX string and a
+ * single ES module import path — the React + ArteOdyssey pairing the MVP
+ * targets. That assumption leaks "TSX / React" into adapter-spec, which is
+ * supposed to be framework-agnostic. The next non-React adapter (Vue,
+ * Svelte, Solid) will force this shape to grow into something like
+ * `{ filename, content }[]` keyed by output target. Per ADR-004 we do not
+ * pre-abstract — this comment is the contract that the broader shape is on
+ * the first-release roadmap (see docs/mvp-scope.md "Beyond MVP"), not in
+ * MVP itself.
+ *
  * - `importPath`: where the generated code imports components from (e.g.
  *   `'@k8o/arte-odyssey'`).
- * - `generate(spec)`: returns a single self-contained TSX string. Empty spec
- *   yields `''`. Per-component formatting (e.g. mapping a `label` prop to
- *   children for buttons) lives inside the adapter's implementation.
+ * - `generate(spec)`: returns a self-contained TSX string. Empty spec
+ *   yields `''`. May throw for malformed input (cycle, unknown component);
+ *   interactive callers should catch and degrade rather than letting the
+ *   exception bubble up.
  */
 export type AdapterCodeOutput = {
   importPath: string;
