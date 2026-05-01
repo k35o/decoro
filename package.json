@@ -1,0 +1,32 @@
+{
+  "name": "decoro",
+  "private": true,
+  "description": "AI tool for collaboratively creating UI in your own design system",
+  "license": "MIT",
+  "author": "k8o",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k35o/decoro.git"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "vp run --filter './packages/*' --filter './apps/*' build",
+    "dev": "vp run --filter './apps/*' --parallel dev",
+    "test": "vp run -r test",
+    "typecheck": "vp run -r typecheck",
+    "check": "vp check",
+    "check:write": "vp check --fix"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.0",
+    "@commitlint/config-conventional": "20.5.0",
+    "@k8o/oxc-config": "0.1.2",
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.13.0"
+  },
+  "packageManager": "pnpm@10.33.2"
+}

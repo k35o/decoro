@@ -1,0 +1,19 @@
+packages:
+  - packages/*
+  - apps/*
+
+blockExoticSubdeps: true
+
+catalog:
+  vite-plus: 0.1.19
+
+allowBuilds:
+  esbuild: false
+  sharp: false
+
+verifyDepsBeforeRun: install
+
+minimumReleaseAge: 4320
+
+minimumReleaseAgeExclude:
+  - '@k8o/*'
