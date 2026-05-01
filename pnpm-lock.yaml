@@ -71,6 +71,12 @@ importers:
       '@decoro/adapter-spec':
         specifier: workspace:^
         version: link:../../packages/adapter-spec
+      '@json-render/core':
+        specifier: 0.18.0
+        version: 0.18.0(zod@4.3.6)
+      '@json-render/react':
+        specifier: 0.18.0
+        version: 0.18.0(react@19.2.5)(zod@4.3.6)
       '@k8o/arte-odyssey':
         specifier: 7.0.1
         version: 7.0.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tailwindcss@4.2.4)(typescript@6.0.3)
