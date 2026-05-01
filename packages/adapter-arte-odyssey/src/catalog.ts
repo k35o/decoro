@@ -2,6 +2,7 @@ import { defineCatalog } from '@json-render/core';
 import { schema } from '@json-render/react/schema';
 import { z } from 'zod';
 
+import { generatedComponents } from './catalog.generated.ts';
 import { isAllowedClassName } from './class-name-allowlist.ts';
 
 const buttonProps = z.object({
@@ -45,6 +46,9 @@ const layoutDescription = (tag: string, semantics: string) =>
 
 export const catalog = defineCatalog(schema, {
   components: {
+    // Generated entries first; hand-written below override on name conflict
+    // (Button / Card / HTML elements ship bespoke shapes).
+    ...generatedComponents,
     Button: {
       props: buttonProps,
       slots: [],

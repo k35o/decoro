@@ -1,22 +1,14 @@
 import type { AdapterCodeOutput } from '@decoro/adapter-spec';
 import { serializeProps } from '@json-render/codegen';
-import type { Spec, UIElement } from '@json-render/core';
+import type { Spec } from '@json-render/core';
+
+import {
+  GENERATED_IMPORT_TAGS,
+  generatedFormatters,
+} from './code-output.generated.ts';
+import { type Formatter, pad, stripNullish } from './codegen-shared.ts';
 
 const importPath = '@k8o/arte-odyssey';
-
-const indentUnit = '  ';
-const pad = (depth: number) => indentUnit.repeat(depth);
-
-const stripNullish = (props: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(props).filter(([, v]) => v !== null && v !== undefined),
-  );
-
-type Formatter = (
-  element: UIElement,
-  renderedChildren: string[],
-  depth: number,
-) => string;
 
 /**
  * Native HTML element types (per ADR-012). Anything in this set is emitted
@@ -59,6 +51,8 @@ const layoutElementFormatter =
  * cannot be silently glossed over.
  */
 const formatters: Record<string, Formatter> = {
+  // Generated formatters first; hand-written below override on name conflict.
+  ...generatedFormatters,
   Button: (element, _children, depth) => {
     const { label, ...rest } = element.props as {
       label?: unknown;
@@ -143,10 +137,12 @@ const generate = (spec: Spec): string => {
   const body = renderElement(spec, spec.root, 1, new Set<string>(), usedTypes);
   if (usedTypes.size === 0) return '';
   // Native HTML tags (ADR-012) need no import; only ArteOdyssey components
-  // appear in the import line.
+  // appear in the import line. Hand-written tags (Button, Card) and the
+  // generated set are both real exports of `@k8o/arte-odyssey`.
   const componentImports = [...usedTypes]
     .filter((t) => !HTML_TAGS.has(t))
     .toSorted();
+  void GENERATED_IMPORT_TAGS;
   const lines: string[] = [];
   if (componentImports.length > 0) {
     lines.push(

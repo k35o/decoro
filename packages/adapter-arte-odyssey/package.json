@@ -10,7 +10,8 @@
     "test": "vp test --run",
     "typecheck": "tsc --noEmit",
     "check": "vp check",
-    "check:write": "vp check --fix"
+    "check:write": "vp check --fix",
+    "generate:catalog": "node --experimental-strip-types scripts/generate-catalog.ts"
   },
   "dependencies": {
     "@decoro/adapter-spec": "workspace:^",

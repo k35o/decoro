@@ -1,0 +1,3351 @@
+{
+  "schemaVersion": 1,
+  "library": {
+    "name": "@k8o/arte-odyssey",
+    "version": "7.0.1"
+  },
+  "components": [
+    {
+      "name": "Accordion",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/accordion/accordion.tsx",
+      "props": [],
+      "examples": []
+    },
+    {
+      "name": "Alert",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/feedback/alert/alert.tsx",
+      "props": [
+        {
+          "name": "status",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "enum",
+            "values": ["success", "info", "warning", "error"]
+          }
+        },
+        {
+          "name": "message",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "string | string[]"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Success",
+          "args": {
+            "status": "success",
+            "message": "Success"
+          }
+        },
+        {
+          "name": "Info",
+          "args": {
+            "status": "info",
+            "message": "Info"
+          }
+        },
+        {
+          "name": "Warning",
+          "args": {
+            "status": "warning",
+            "message": "Warning"
+          }
+        },
+        {
+          "name": "Error",
+          "args": {
+            "status": "error",
+            "message": "Error"
+          }
+        },
+        {
+          "name": "ArrayMessage",
+          "args": {
+            "status": "error",
+            "message": [
+              "メールアドレスの形式が正しくありません",
+              "パスワードは8文字以上で入力してください",
+              "利用規約に同意してください"
+            ]
+          }
+        },
+        {
+          "name": "SingleArrayMessage",
+          "args": {
+            "status": "success",
+            "message": ["Success"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Anchor",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/navigation/anchor/anchor.tsx",
+      "props": [
+        {
+          "name": "href",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "openInNewTab",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "renderAnchor",
+          "description": "",
+          "required": false,
+          "defaultValue": "({ children: anchorChildren, ...rest }) => (\n    <a {...rest}>{anchorChildren}</a>\n  )",
+          "type": {
+            "kind": "union",
+            "raw": "((props: { type: \"internal\" | \"external\"; href: NoInfer<T>; className: string; target?: string; rel?: string; children: ReactNode; }) => ReactNode) | undefined"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "External",
+          "args": {
+            "href": "https://example.com",
+            "children": "external link"
+          }
+        },
+        {
+          "name": "Internal",
+          "args": {
+            "href": "/blog",
+            "children": "internal link"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Autocomplete",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/autocomplete/autocomplete.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "string | undefined"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "options",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "readonly Readonly<{ value: string; label: string; }>[]"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "((value: string[]) => void) | ((value: string[]) => void)"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "id": "autocomplete",
+            "isInvalid": false,
+            "isDisabled": false,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "id": "autocomplete",
+            "isInvalid": true,
+            "isDisabled": false,
+            "isRequired": true
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "id": "autocomplete",
+            "isInvalid": false,
+            "isDisabled": true,
+            "isRequired": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "Avatar",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/avatar/avatar.tsx",
+      "props": [
+        {
+          "name": "alt",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "fallback",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        },
+        {
+          "name": "src",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "name": "Arte Odyssey"
+          }
+        },
+        {
+          "name": "WithImage",
+          "args": {
+            "name": "Arte Odyssey",
+            "alt": "Arte Odyssey",
+            "src": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
+          }
+        },
+        {
+          "name": "Large",
+          "args": {
+            "name": "Arte Odyssey",
+            "size": "lg"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Badge",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/badge/badge.tsx",
+      "props": [
+        {
+          "name": "text",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md"]
+          }
+        },
+        {
+          "name": "interactive",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "tone",
+          "description": "",
+          "required": false,
+          "defaultValue": "neutral",
+          "type": {
+            "kind": "enum",
+            "values": ["neutral", "info", "success", "warning", "error"]
+          }
+        },
+        {
+          "name": "variant",
+          "description": "",
+          "required": false,
+          "defaultValue": "solid",
+          "type": {
+            "kind": "enum",
+            "values": ["solid", "outline"]
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "text": "New"
+          }
+        },
+        {
+          "name": "Tones",
+          "args": {
+            "text": "New"
+          }
+        },
+        {
+          "name": "Outline",
+          "args": {
+            "text": "Preview",
+            "tone": "info",
+            "variant": "outline"
+          }
+        }
+      ]
+    },
+    {
+      "name": "BaselineStatus",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/baseline-status/baseline-status.tsx",
+      "props": [
+        {
+          "name": "featureId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Primary",
+          "args": {
+            "featureId": "promise-try"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Button",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/buttons/button/button.tsx",
+      "props": [
+        {
+          "name": "type",
+          "description": "",
+          "required": false,
+          "defaultValue": "button",
+          "type": {
+            "kind": "enum",
+            "values": ["button", "submit"]
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        },
+        {
+          "name": "color",
+          "description": "",
+          "required": false,
+          "defaultValue": "primary",
+          "type": {
+            "kind": "enum",
+            "values": ["primary", "secondary", "gray"]
+          }
+        },
+        {
+          "name": "variant",
+          "description": "",
+          "required": false,
+          "defaultValue": "contained",
+          "type": {
+            "kind": "enum",
+            "values": ["contained", "outlined", "skeleton"]
+          }
+        },
+        {
+          "name": "fullWidth",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "startIcon",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ReactNode"
+          }
+        },
+        {
+          "name": "endIcon",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ReactNode"
+          }
+        },
+        {
+          "name": "onAction",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "(() => void | Promise<void>)"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Primary",
+          "args": {
+            "type": "button"
+          }
+        },
+        {
+          "name": "Secondary",
+          "args": {
+            "type": "button",
+            "color": "secondary"
+          }
+        },
+        {
+          "name": "Outlined",
+          "args": {
+            "type": "button",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "OutlinedSecondary",
+          "args": {
+            "type": "button",
+            "color": "secondary",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "Skeleton",
+          "args": {
+            "type": "button",
+            "variant": "skeleton"
+          }
+        },
+        {
+          "name": "Gray",
+          "args": {
+            "type": "button",
+            "color": "gray"
+          }
+        },
+        {
+          "name": "OutlinedGray",
+          "args": {
+            "type": "button",
+            "color": "gray",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "FullWidth",
+          "args": {
+            "type": "button",
+            "fullWidth": true
+          }
+        },
+        {
+          "name": "Large",
+          "args": {
+            "type": "button",
+            "size": "lg"
+          }
+        },
+        {
+          "name": "Medium",
+          "args": {
+            "type": "button",
+            "size": "md"
+          }
+        },
+        {
+          "name": "Small",
+          "args": {
+            "type": "button",
+            "size": "sm"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "type": "button",
+            "disabled": true
+          }
+        },
+        {
+          "name": "DisabledOutlined",
+          "args": {
+            "type": "button",
+            "variant": "outlined",
+            "disabled": true
+          }
+        },
+        {
+          "name": "DisabledSkeleton",
+          "args": {
+            "type": "button",
+            "variant": "skeleton",
+            "disabled": true
+          }
+        },
+        {
+          "name": "StartIcon",
+          "args": {
+            "type": "button"
+          }
+        },
+        {
+          "name": "EndIcon",
+          "args": {
+            "type": "button"
+          }
+        },
+        {
+          "name": "AsyncAction",
+          "args": {
+            "type": "button"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Card",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/card/card.tsx",
+      "props": [
+        {
+          "name": "width",
+          "description": "",
+          "required": false,
+          "defaultValue": "full",
+          "type": {
+            "kind": "enum",
+            "values": ["full", "fit"]
+          }
+        },
+        {
+          "name": "appearance",
+          "description": "",
+          "required": false,
+          "defaultValue": "shadow",
+          "type": {
+            "kind": "enum",
+            "values": ["shadow", "bordered"]
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Primary",
+          "args": {}
+        },
+        {
+          "name": "Interactive",
+          "args": {}
+        },
+        {
+          "name": "Bordered",
+          "args": {}
+        },
+        {
+          "name": "FitWidth",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "Checkbox",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/checkbox/checkbox.tsx",
+      "props": [
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "itemValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultChecked",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "isDisabled": false,
+            "label": "checkbox"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "isDisabled": true,
+            "label": "disabled checkbox",
+            "defaultChecked": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "CheckboxCard",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/checkbox-card/checkbox-card.tsx",
+      "props": [
+        {
+          "name": "labelId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "options",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "readonly Readonly<{ value: string; label: string; description?: string | undefined; visual?: ReactNode; disabled?: boolean | undefined; }>[]"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "((value: string[]) => void) | ((value: string[]) => void)"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "labelId": "checkbox-card-label",
+            "isDisabled": false,
+            "isInvalid": false
+          }
+        },
+        {
+          "name": "DefaultValue",
+          "args": {
+            "labelId": "checkbox-card-label",
+            "isDisabled": false,
+            "isInvalid": false,
+            "defaultValue": ["history", "share"]
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "labelId": "checkbox-card-label",
+            "isDisabled": true,
+            "isInvalid": false,
+            "defaultValue": ["comments"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CheckboxGroup",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/checkbox-group/checkbox-group.tsx",
+      "props": [
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "labelId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "((value: string[]) => void) | ((value: string[]) => void)"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "string[]"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {}
+        },
+        {
+          "name": "Disabled",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "Code",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/code/code.tsx",
+      "props": [],
+      "examples": []
+    },
+    {
+      "name": "Drawer",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/overlays/drawer/drawer.tsx",
+      "props": [
+        {
+          "name": "title",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "ReactNode"
+          }
+        },
+        {
+          "name": "isOpen",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "onClose",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "() => void"
+          }
+        },
+        {
+          "name": "side",
+          "description": "",
+          "required": false,
+          "defaultValue": "right",
+          "type": {
+            "kind": "enum",
+            "values": ["left", "right"]
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "isOpen": true,
+            "title": "メニュー"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Form",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/form/form.tsx",
+      "props": [
+        {
+          "name": "action",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "string | ((formData: FormData) => void | Promise<void>)"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "WithAction",
+          "args": {}
+        },
+        {
+          "name": "WithActionState",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "FormControl",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/form-control/form-control.tsx",
+      "props": [
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "labelAs",
+          "description": "",
+          "required": false,
+          "defaultValue": "label",
+          "type": {
+            "kind": "enum",
+            "values": ["label", "legend"]
+          }
+        },
+        {
+          "name": "helpText",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "errorText",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "renderInput",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "(props: { id: string; describedbyId: string | undefined; labelId: string; isDisabled: boolean; isInvalid: boolean; isRequired: boolean; }) => ReactElement<unknown, string | JSXElementConstructor<any>>"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "label": "メールアドレス"
+          }
+        },
+        {
+          "name": "HelpText",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。"
+          }
+        },
+        {
+          "name": "Required",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。",
+            "isRequired": true
+          }
+        },
+        {
+          "name": "Error",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。",
+            "isInvalid": true,
+            "errorText": "メールアドレスが正しくありません。",
+            "isRequired": true
+          }
+        },
+        {
+          "name": "ErrorWithoutText",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。",
+            "isInvalid": true,
+            "isRequired": true
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。",
+            "isDisabled": true
+          }
+        },
+        {
+          "name": "Legend",
+          "args": {
+            "label": "メールアドレス",
+            "helpText": "RFCに準拠したメールアドレスを入力してください。",
+            "labelAs": "legend"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Heading",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/heading/heading.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "type",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "enum",
+            "values": ["h1", "h2", "h3", "h4", "h5", "h6"]
+          }
+        },
+        {
+          "name": "lineClamp",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "H1",
+          "args": {
+            "type": "h1"
+          }
+        },
+        {
+          "name": "H2",
+          "args": {
+            "type": "h2"
+          }
+        },
+        {
+          "name": "H3",
+          "args": {
+            "type": "h3"
+          }
+        },
+        {
+          "name": "H4",
+          "args": {
+            "type": "h4"
+          }
+        },
+        {
+          "name": "H5",
+          "args": {
+            "type": "h5"
+          }
+        },
+        {
+          "name": "H6",
+          "args": {
+            "type": "h6"
+          }
+        }
+      ]
+    },
+    {
+      "name": "IconButton",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/buttons/icon-button/icon-button.tsx",
+      "props": [
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        },
+        {
+          "name": "bg",
+          "description": "",
+          "required": false,
+          "defaultValue": "transparent",
+          "type": {
+            "kind": "enum",
+            "values": ["transparent", "base", "primary", "secondary"]
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onAction",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "(() => void | Promise<void>)"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Large",
+          "args": {
+            "label": "コピー",
+            "size": "lg"
+          }
+        },
+        {
+          "name": "Medium",
+          "args": {
+            "label": "コピー",
+            "size": "md"
+          }
+        },
+        {
+          "name": "Small",
+          "args": {
+            "label": "コピー",
+            "size": "sm"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "label": "コピー",
+            "disabled": true
+          }
+        },
+        {
+          "name": "BgBase",
+          "args": {
+            "label": "コピー",
+            "bg": "base"
+          }
+        },
+        {
+          "name": "BgPrimary",
+          "args": {
+            "label": "コピー",
+            "bg": "primary"
+          }
+        },
+        {
+          "name": "BgSecondary",
+          "args": {
+            "label": "コピー",
+            "bg": "secondary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "IconLink",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/buttons/icon-link/icon-link.tsx",
+      "props": [
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        },
+        {
+          "name": "bg",
+          "description": "",
+          "required": false,
+          "defaultValue": "transparent",
+          "type": {
+            "kind": "enum",
+            "values": ["transparent", "base", "primary", "secondary"]
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "href",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "openInNewTab",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "renderAnchor",
+          "description": "",
+          "required": false,
+          "defaultValue": "({ children: anchorChildren, ...rest }) => (\n    <a {...rest}>{anchorChildren}</a>\n  )",
+          "type": {
+            "kind": "union",
+            "raw": "((props: { href: NoInfer<T>; className: string; target?: string; rel?: string; children: ReactNode; }) => ReactNode) | undefined"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Large",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "size": "lg"
+          }
+        },
+        {
+          "name": "Medium",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "size": "md"
+          }
+        },
+        {
+          "name": "Small",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "size": "sm"
+          }
+        },
+        {
+          "name": "BgBase",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "bg": "base"
+          }
+        },
+        {
+          "name": "BgPrimary",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "bg": "primary"
+          }
+        },
+        {
+          "name": "BgSecondary",
+          "args": {
+            "href": "https://example.com",
+            "label": "コピー",
+            "bg": "secondary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "InteractiveCard",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/data-display/card/interactive-card.tsx",
+      "props": [
+        {
+          "name": "width",
+          "description": "",
+          "required": false,
+          "defaultValue": "full",
+          "type": {
+            "kind": "enum",
+            "values": ["full", "fit"]
+          }
+        },
+        {
+          "name": "appearance",
+          "description": "",
+          "required": false,
+          "defaultValue": "shadow",
+          "type": {
+            "kind": "enum",
+            "values": ["shadow", "bordered"]
+          }
+        }
+      ],
+      "examples": []
+    },
+    {
+      "name": "LinkButton",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/buttons/link-button/link-button.tsx",
+      "props": [
+        {
+          "name": "variant",
+          "description": "",
+          "required": false,
+          "defaultValue": "contained",
+          "type": {
+            "kind": "enum",
+            "values": ["contained", "outlined", "skeleton"]
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        },
+        {
+          "name": "color",
+          "description": "",
+          "required": false,
+          "defaultValue": "primary",
+          "type": {
+            "kind": "enum",
+            "values": ["primary", "secondary", "gray"]
+          }
+        },
+        {
+          "name": "href",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "startIcon",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ReactNode"
+          }
+        },
+        {
+          "name": "endIcon",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ReactNode"
+          }
+        },
+        {
+          "name": "active",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "openInNewTab",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "renderAnchor",
+          "description": "",
+          "required": false,
+          "defaultValue": "({ children: anchorChildren, ...rest }) => (\n    <a {...rest}>{anchorChildren}</a>\n  )",
+          "type": {
+            "kind": "union",
+            "raw": "((props: { 'aria-label'?: string; href: NoInfer<T>; className: string; target?: string; rel?: string | undefined; children: ReactNode; }) => ReactNode) | undefined"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Large",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "size": "lg"
+          }
+        },
+        {
+          "name": "Medium",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "size": "md"
+          }
+        },
+        {
+          "name": "Small",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "size": "sm"
+          }
+        },
+        {
+          "name": "Secondary",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "color": "secondary"
+          }
+        },
+        {
+          "name": "Outlined",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "OutlinedSecondary",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "color": "secondary",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "Skeleton",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "variant": "skeleton"
+          }
+        },
+        {
+          "name": "Gray",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "color": "gray"
+          }
+        },
+        {
+          "name": "GrayOutlined",
+          "args": {
+            "href": "",
+            "children": "ボタン",
+            "color": "gray",
+            "variant": "outlined"
+          }
+        },
+        {
+          "name": "StartIcon",
+          "args": {
+            "href": "",
+            "children": "ボタン"
+          }
+        },
+        {
+          "name": "EndIcon",
+          "args": {
+            "href": "",
+            "children": "ボタン"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Modal",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/overlays/modal/modal.tsx",
+      "props": [
+        {
+          "name": "ref",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "RefObject<HTMLDialogElement | null>"
+          }
+        },
+        {
+          "name": "type",
+          "description": "",
+          "required": false,
+          "defaultValue": "center",
+          "type": {
+            "kind": "enum",
+            "values": ["center", "bottom", "right", "left"]
+          }
+        },
+        {
+          "name": "defaultOpen",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isOpen",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "onClose",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "(() => void)"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "defaultOpen": true
+          }
+        },
+        {
+          "name": "ExternalRefControl",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "NumberField",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/number-field/number-field.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "step",
+          "description": "",
+          "required": false,
+          "defaultValue": 1,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "precision",
+          "description": "",
+          "required": false,
+          "defaultValue": 0,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "max",
+          "description": "",
+          "required": false,
+          "defaultValue": 9007199254740991,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "min",
+          "description": "",
+          "required": false,
+          "defaultValue": null,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "placeholder",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "((value: number) => void) | ((value: number) => void)"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Min0Max100",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "name": "Precision",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "precision": 2,
+            "step": 0.01
+          }
+        },
+        {
+          "name": "Placeholder",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "placeholder": "10.2"
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": false,
+            "isInvalid": true,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "numberfield-feedback",
+            "defaultValue": 0,
+            "isDisabled": true,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pagination",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/navigation/pagination/pagination.tsx",
+      "props": [
+        {
+          "name": "totalPages",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "currentPage",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "onPageChange",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "(page: number) => void"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "prevLabel",
+          "description": "",
+          "required": false,
+          "defaultValue": "前へ",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "nextLabel",
+          "description": "",
+          "required": false,
+          "defaultValue": "次へ",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "aria-label",
+          "description": "",
+          "required": false,
+          "defaultValue": "ページネーション",
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {}
+        },
+        {
+          "name": "Middle",
+          "args": {}
+        },
+        {
+          "name": "Last",
+          "args": {}
+        },
+        {
+          "name": "Disabled",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "PasswordInput",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/password-input/password-input.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "placeholder",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "autoComplete",
+          "description": "",
+          "required": false,
+          "defaultValue": "current-password",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "showLabel",
+          "description": "",
+          "required": false,
+          "defaultValue": "Show password",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "hideLabel",
+          "description": "",
+          "required": false,
+          "defaultValue": "Hide password",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "isInvalid": false,
+            "isDisabled": false,
+            "isRequired": false,
+            "placeholder": "Enter your password",
+            "defaultValue": "secret-password"
+          }
+        },
+        {
+          "name": "Empty",
+          "args": {
+            "isInvalid": false,
+            "isDisabled": false,
+            "isRequired": false,
+            "placeholder": "Enter your password",
+            "defaultValue": "secret-password"
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "isInvalid": true,
+            "isDisabled": false,
+            "isRequired": false,
+            "placeholder": "Enter your password",
+            "defaultValue": "too-short"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "isInvalid": false,
+            "isDisabled": true,
+            "isRequired": false,
+            "placeholder": "Enter your password",
+            "defaultValue": "secret-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Progress",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/feedback/progress/progress.tsx",
+      "props": [
+        {
+          "name": "progress",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "maxProgress",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "minProgress",
+          "description": "",
+          "required": false,
+          "defaultValue": 0,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Primary",
+          "args": {
+            "progress": 50,
+            "maxProgress": 100
+          }
+        }
+      ]
+    },
+    {
+      "name": "Radio",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/radio/radio.tsx",
+      "props": [
+        {
+          "name": "labelId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "options",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "readonly Readonly<{ value: string; label: string; }>[]"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "isDisabled": false,
+            "labelId": "radio-story-label"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "isDisabled": true,
+            "labelId": "radio-story-label",
+            "defaultValue": "vue"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RadioCard",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/radio-card/radio-card.tsx",
+      "props": [
+        {
+          "name": "labelId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "options",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "readonly Readonly<{ value: string; label: string; description?: string | undefined; visual?: ReactNode; disabled?: boolean | undefined; }>[]"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "labelId": "radio-card-label",
+            "isDisabled": false,
+            "isInvalid": false
+          }
+        },
+        {
+          "name": "DefaultValue",
+          "args": {
+            "labelId": "radio-card-label",
+            "isDisabled": false,
+            "isInvalid": false,
+            "defaultValue": "starter"
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "labelId": "radio-card-label",
+            "isDisabled": true,
+            "isInvalid": false,
+            "defaultValue": "team"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ScrollLinked",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/layout/scroll-linked/scroll-linked.tsx",
+      "props": [
+        {
+          "name": "container",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "RefObject<HTMLElement | null>"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "NoScroll",
+          "args": {}
+        },
+        {
+          "name": "Scroll",
+          "args": {}
+        },
+        {
+          "name": "WithContainer",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "Select",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/select/select.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "string | undefined"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "options",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "unknown",
+            "raw": "readonly Readonly<{ value: string; label: string; }>[]"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLSelectElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "id": "select",
+            "describedbyId": "select-feedback",
+            "options": [
+              {
+                "value": "2",
+                "label": "2進数"
+              },
+              {
+                "value": "8",
+                "label": "8進数"
+              },
+              {
+                "value": "10",
+                "label": "10進数"
+              },
+              {
+                "value": "16",
+                "label": "16進数"
+              }
+            ],
+            "defaultValue": "10",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "id": "select",
+            "describedbyId": "select-feedback",
+            "options": [
+              {
+                "value": "2",
+                "label": "2進数"
+              },
+              {
+                "value": "8",
+                "label": "8進数"
+              },
+              {
+                "value": "10",
+                "label": "10進数"
+              },
+              {
+                "value": "16",
+                "label": "16進数"
+              }
+            ],
+            "defaultValue": "10",
+            "isDisabled": false,
+            "isInvalid": true,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "id": "select",
+            "describedbyId": "select-feedback",
+            "options": [
+              {
+                "value": "2",
+                "label": "2進数"
+              },
+              {
+                "value": "8",
+                "label": "8進数"
+              },
+              {
+                "value": "10",
+                "label": "10進数"
+              },
+              {
+                "value": "16",
+                "label": "16進数"
+              }
+            ],
+            "defaultValue": "10",
+            "isDisabled": true,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "Separator",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/navigation/breadcrumb/breadcrumb.tsx",
+      "props": [],
+      "examples": [
+        {
+          "name": "Horizontal",
+          "args": {
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "name": "Vertical",
+          "args": {
+            "orientation": "vertical"
+          }
+        },
+        {
+          "name": "ColorMute",
+          "args": {
+            "color": "mute"
+          }
+        },
+        {
+          "name": "ColorSubtle",
+          "args": {
+            "color": "subtle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Skeleton",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/feedback/skeleton/skeleton.tsx",
+      "props": [
+        {
+          "name": "animate",
+          "description": "",
+          "required": false,
+          "defaultValue": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "shape",
+          "description": "",
+          "required": false,
+          "defaultValue": "rect",
+          "type": {
+            "kind": "enum",
+            "values": ["rect", "circle"]
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {}
+        },
+        {
+          "name": "Circle",
+          "args": {
+            "shape": "circle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Slider",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/slider/slider.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "step",
+          "description": "",
+          "required": false,
+          "defaultValue": 1,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "max",
+          "description": "",
+          "required": false,
+          "defaultValue": 100,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "min",
+          "description": "",
+          "required": false,
+          "defaultValue": 0,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "union",
+            "raw": "((value: number) => void) | ((value: number) => void)"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "isInvalid": false,
+            "isDisabled": false,
+            "isRequired": false,
+            "defaultValue": 50
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "isInvalid": false,
+            "isDisabled": true,
+            "isRequired": false,
+            "defaultValue": 30
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "isInvalid": true,
+            "isDisabled": false,
+            "isRequired": false,
+            "defaultValue": 90
+          }
+        }
+      ]
+    },
+    {
+      "name": "Spinner",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/feedback/spinner/spinner.tsx",
+      "props": [
+        {
+          "name": "label",
+          "description": "",
+          "required": false,
+          "defaultValue": "Loading",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "size",
+          "description": "",
+          "required": false,
+          "defaultValue": "md",
+          "type": {
+            "kind": "enum",
+            "values": ["sm", "md", "lg"]
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {}
+        },
+        {
+          "name": "Sizes",
+          "args": {}
+        }
+      ]
+    },
+    {
+      "name": "Switch",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/switch/switch.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "label",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultChecked",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "label": "Enable notifications"
+          }
+        },
+        {
+          "name": "DefaultChecked",
+          "args": {
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "label": "Automatic updates",
+            "defaultChecked": true
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "isDisabled": true,
+            "isInvalid": false,
+            "isRequired": false,
+            "label": "Location services",
+            "defaultChecked": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "Textarea",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/textarea/textarea.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "union",
+            "raw": "string | undefined"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "placeholder",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "rows",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "number"
+          }
+        },
+        {
+          "name": "fullHeight",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "autoResize",
+          "description": "",
+          "required": false,
+          "defaultValue": false,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLTextAreaElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "FullHeight",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "fullHeight": true
+          }
+        },
+        {
+          "name": "AutoResize",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "autoResize": true
+          }
+        },
+        {
+          "name": "Rows",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "rows": 10
+          }
+        },
+        {
+          "name": "Placeholder",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "placeholder": "10進数"
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": false,
+            "isInvalid": true,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "id": "textarea",
+            "describedbyId": "textarea-feedback",
+            "isDisabled": true,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "TextField",
+      "importPath": "@k8o/arte-odyssey",
+      "description": "",
+      "sourcePath": "src/components/form/text-field/text-field.tsx",
+      "props": [
+        {
+          "name": "id",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "describedbyId",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "isInvalid",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isDisabled",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "isRequired",
+          "description": "",
+          "required": true,
+          "type": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "placeholder",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "value",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "onChange",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "unknown",
+            "raw": "ChangeEventHandler<HTMLInputElement>"
+          }
+        },
+        {
+          "name": "defaultValue",
+          "description": "",
+          "required": false,
+          "type": {
+            "kind": "string"
+          }
+        }
+      ],
+      "examples": [
+        {
+          "name": "Default",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "textfield-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Placeholder",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "textfield-feedback",
+            "isDisabled": false,
+            "isInvalid": false,
+            "isRequired": false,
+            "placeholder": "ID"
+          }
+        },
+        {
+          "name": "Invalid",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "textfield-feedback",
+            "isDisabled": false,
+            "isInvalid": true,
+            "isRequired": false
+          }
+        },
+        {
+          "name": "Disabled",
+          "args": {
+            "id": "textfield",
+            "describedbyId": "textfield-feedback",
+            "isDisabled": true,
+            "isInvalid": false,
+            "isRequired": false
+          }
+        }
+      ]
+    }
+  ]
+}

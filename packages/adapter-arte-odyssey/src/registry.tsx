@@ -6,6 +6,7 @@ import { Button, Card } from '@k8o/arte-odyssey';
 import { createElement } from 'react';
 
 import type { ButtonProps, CardProps, LayoutElementProps } from './catalog.ts';
+import { generatedRegistry } from './registry.generated.tsx';
 
 const ButtonRenderer = ({ element }: ComponentRenderProps<ButtonProps>) => {
   const { label, type, size, color, variant, fullWidth, disabled } =
@@ -57,6 +58,8 @@ const layoutElementRenderer = (tag: string) => {
 };
 
 export const registry: ComponentRegistry = {
+  // Generated entries first; hand-written below override on name conflict.
+  ...generatedRegistry,
   Button: ButtonRenderer,
   Card: CardRenderer,
   div: layoutElementRenderer('div'),
