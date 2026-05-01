@@ -2,6 +2,7 @@ import { defineCatalog } from '@json-render/core';
 import { schema } from '@json-render/react/schema';
 import { z } from 'zod';
 
+import { generatedComponents } from './catalog.generated.ts';
 import { isAllowedClassName } from './class-name-allowlist.ts';
 
 const buttonProps = z.object({
@@ -17,6 +18,39 @@ const buttonProps = z.object({
 const cardProps = z.object({
   width: z.enum(['full', 'fit']).nullable(),
   appearance: z.enum(['shadow', 'bordered']).nullable(),
+});
+
+const alertProps = z.object({
+  status: z.enum(['success', 'info', 'warning', 'error']),
+  message: z.string(),
+});
+
+const formControlProps = z.object({
+  label: z.string(),
+  helpText: z.string().nullable(),
+  errorText: z.string().nullable(),
+  isDisabled: z.boolean().nullable(),
+  isInvalid: z.boolean().nullable(),
+  isRequired: z.boolean().nullable(),
+});
+
+const drawerProps = z.object({
+  title: z.string(),
+  isOpen: z.boolean().nullable(),
+  side: z.enum(['left', 'right']).nullable(),
+});
+
+const modalProps = z.object({
+  type: z.enum(['center', 'bottom', 'right', 'left']).nullable(),
+  isOpen: z.boolean().nullable(),
+});
+
+const paginationProps = z.object({
+  totalPages: z.number(),
+  currentPage: z.number(),
+  isDisabled: z.boolean().nullable(),
+  prevLabel: z.string().nullable(),
+  nextLabel: z.string().nullable(),
 });
 
 /**
@@ -45,6 +79,9 @@ const layoutDescription = (tag: string, semantics: string) =>
 
 export const catalog = defineCatalog(schema, {
   components: {
+    // Generated entries first; hand-written below override on name conflict
+    // (Button / Card / HTML elements ship bespoke shapes).
+    ...generatedComponents,
     Button: {
       props: buttonProps,
       slots: [],
@@ -56,6 +93,36 @@ export const catalog = defineCatalog(schema, {
       slots: ['default'],
       description:
         'Container for grouping content. Use `appearance: "bordered"` when stacking multiple cards on the same surface, otherwise leave the default shadow.',
+    },
+    Alert: {
+      props: alertProps,
+      slots: [],
+      description:
+        'Status alert. Pick `status` by intent: "error" for failures, "warning" for cautions, "info" for informational notices, "success" for confirmations. `message` is a single short string.',
+    },
+    FormControl: {
+      props: formControlProps,
+      slots: ['default'],
+      description:
+        'Labelled wrapper around a single form input. Put exactly one input child (TextField, PasswordInput, NumberField, Select, Textarea, Checkbox, Radio, etc.) inside. Use `helpText` for hints and `errorText` for validation messages.',
+    },
+    Drawer: {
+      props: drawerProps,
+      slots: ['default'],
+      description:
+        'Side-attached overlay panel. `side="right"` (default) for help / settings panes, `side="left"` for navigation drawers. `isOpen` defaults to true so the preview shows the rendered state; the generated TSX wires it into your own state.',
+    },
+    Modal: {
+      props: modalProps,
+      slots: ['default'],
+      description:
+        'Centered (default) or edge-attached dialog. Pick `type` based on the experience: "center" for confirmations, "bottom" for sheet-style action menus, "right"/"left" for slide-overs. `isOpen` defaults to true so the preview shows the rendered state.',
+    },
+    Pagination: {
+      props: paginationProps,
+      slots: [],
+      description:
+        'Pagination control with prev / next buttons. `totalPages` and `currentPage` are required (1-based). `prevLabel` / `nextLabel` default to Japanese labels in ArteOdyssey; override for English UIs.',
     },
     div: {
       props: layoutElementProps,
@@ -96,3 +163,8 @@ export const catalog = defineCatalog(schema, {
 export type ButtonProps = z.infer<typeof buttonProps>;
 export type CardProps = z.infer<typeof cardProps>;
 export type LayoutElementProps = z.infer<typeof layoutElementProps>;
+export type AlertProps = z.infer<typeof alertProps>;
+export type FormControlProps = z.infer<typeof formControlProps>;
+export type DrawerProps = z.infer<typeof drawerProps>;
+export type ModalProps = z.infer<typeof modalProps>;
+export type PaginationProps = z.infer<typeof paginationProps>;

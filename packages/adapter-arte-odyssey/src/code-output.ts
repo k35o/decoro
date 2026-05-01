@@ -1,22 +1,14 @@
 import type { AdapterCodeOutput } from '@decoro/adapter-spec';
 import { serializeProps } from '@json-render/codegen';
-import type { Spec, UIElement } from '@json-render/core';
+import type { Spec } from '@json-render/core';
+
+import {
+  GENERATED_IMPORT_TAGS,
+  generatedFormatters,
+} from './code-output.generated.ts';
+import { type Formatter, pad, stripNullish } from './codegen-shared.ts';
 
 const importPath = '@k8o/arte-odyssey';
-
-const indentUnit = '  ';
-const pad = (depth: number) => indentUnit.repeat(depth);
-
-const stripNullish = (props: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(props).filter(([, v]) => v !== null && v !== undefined),
-  );
-
-type Formatter = (
-  element: UIElement,
-  renderedChildren: string[],
-  depth: number,
-) => string;
 
 /**
  * Native HTML element types (per ADR-012). Anything in this set is emitted
@@ -59,6 +51,8 @@ const layoutElementFormatter =
  * cannot be silently glossed over.
  */
 const formatters: Record<string, Formatter> = {
+  // Generated formatters first; hand-written below override on name conflict.
+  ...generatedFormatters,
   Button: (element, _children, depth) => {
     const { label, ...rest } = element.props as {
       label?: unknown;
@@ -88,6 +82,76 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}${open}`,
       ...renderedChildren,
       `${pad(depth)}</Card>`,
+    ].join('\n');
+  },
+  Alert: (element, _children, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return propsAttrs
+      ? `${pad(depth)}<Alert ${propsAttrs} />`
+      : `${pad(depth)}<Alert />`;
+  },
+  FormControl: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    if (renderedChildren.length === 0) {
+      return `${pad(depth)}<FormControl ${propsAttrs} renderInput={() => null} />`;
+    }
+    // Wrap rendered children inside a `renderInput={() => (...)}` callback so
+    // the emitted TSX matches ArteOdyssey's actual API. Each child line gets
+    // an extra indent level to nest correctly under the callback body.
+    const reIndented = renderedChildren.map((line) =>
+      line.replace(/^( *)/, (m) => m.concat(pad(2))),
+    );
+    return [
+      `${pad(depth)}<FormControl`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}renderInput={() => (`,
+      ...reIndented,
+      `${pad(depth + 1)})}`,
+      `${pad(depth)}/>`,
+    ].join('\n');
+  },
+  Drawer: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return [
+      `${pad(depth)}<Drawer`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onClose to your own dismissal state`,
+      `${pad(depth + 1)}onClose={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</Drawer>`,
+    ].join('\n');
+  },
+  Modal: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    const opener = propsAttrs ? `<Modal ${propsAttrs}` : '<Modal';
+    return [
+      `${pad(depth)}${opener}`,
+      `${pad(depth + 1)}// TODO: wire onClose to your own dismissal state`,
+      `${pad(depth + 1)}onClose={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</Modal>`,
+    ].join('\n');
+  },
+  Pagination: (element, _children, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return [
+      `${pad(depth)}<Pagination`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onPageChange to your routing / data fetch`,
+      `${pad(depth + 1)}onPageChange={(_page) => {}}`,
+      `${pad(depth)}/>`,
     ].join('\n');
   },
   div: layoutElementFormatter('div'),
@@ -143,10 +207,12 @@ const generate = (spec: Spec): string => {
   const body = renderElement(spec, spec.root, 1, new Set<string>(), usedTypes);
   if (usedTypes.size === 0) return '';
   // Native HTML tags (ADR-012) need no import; only ArteOdyssey components
-  // appear in the import line.
+  // appear in the import line. Hand-written tags (Button, Card) and the
+  // generated set are both real exports of `@k8o/arte-odyssey`.
   const componentImports = [...usedTypes]
     .filter((t) => !HTML_TAGS.has(t))
     .toSorted();
+  void GENERATED_IMPORT_TAGS;
   const lines: string[] = [];
   if (componentImports.length > 0) {
     lines.push(
