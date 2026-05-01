@@ -2,8 +2,8 @@ import type { LlmConfig } from '@decoro/llm-config';
 
 /**
  * Decoro configuration. Edit this file to point Decoro at your preferred LLM
- * provider and model. The API key is read from `ANTHROPIC_API_KEY` in the
- * environment (see the repo-root `.env.example`); do not hard-code it here.
+ * provider and model. API keys are read from environment variables (see
+ * `.env.example` at the repo root); do not hard-code them here.
  *
  * Lives next to the Next.js app (rather than the repo root that
  * `docs/architecture.md` originally sketched) for two practical reasons:
@@ -11,6 +11,18 @@ import type { LlmConfig } from '@decoro/llm-config';
  *      the repo root cannot resolve `@decoro/llm-config`.
  *   2. Next.js picks up `apps/web/.env.local` for the API key without extra
  *      wiring when this file is consumed from `apps/web` server code.
+ *
+ * Switching providers is a one-line change. The library design hypothesis
+ * (ADR-003) is verified primarily on Anthropic Claude — Google Gemini is
+ * wired so contributors without an Anthropic key can still smoke-test.
+ *
+ * Anthropic (default):
+ *   { provider: 'anthropic', model: 'claude-sonnet-4-6',
+ *     apiKey: process.env['ANTHROPIC_API_KEY'] }
+ *
+ * Google Gemini (free tier):
+ *   { provider: 'google', model: 'gemini-2.5-flash',
+ *     apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'] }
  *
  * Adapter selection lives elsewhere for now — apps/web pins
  * `@decoro/adapter-arte-odyssey` directly. A `defineConfig` helper that
