@@ -78,10 +78,27 @@ type PropJson = z.infer<typeof propEntrySchema>;
 /**
  * Components handled by hand. The generator skips them so `catalog.ts`,
  * `registry.tsx`, and `code-output.ts` can keep emitting their bespoke
- * versions (Button: label→children; Card: shadow/bordered enum + slot;
- * etc.). Add to this set whenever a generated entry needs a hand override.
+ * versions:
+ *
+ * - Button: `label`-prop → JSX-children lowering.
+ * - Card: tight enum surface (shadow/bordered) + slot.
+ * - Alert: `message: string | string[]` shape that does not lower cleanly.
+ * - FormControl: `renderInput` is a render-prop that needs slot composition.
+ * - Drawer / Modal: required `onClose` callback; needs json-render `actions`
+ *   wiring and a no-op default for the preview path.
+ * - Pagination: required `onPageChange` callback; same as Drawer.
+ *
+ * Add to this set whenever a generated entry needs a hand override.
  */
-const HAND_OVERRIDDEN_COMPONENTS = new Set(['Button', 'Card']);
+const HAND_OVERRIDDEN_COMPONENTS = new Set([
+  'Button',
+  'Card',
+  'Alert',
+  'FormControl',
+  'Drawer',
+  'Modal',
+  'Pagination',
+]);
 
 type CliFlags = { from: string };
 
@@ -118,32 +135,122 @@ const readCatalog = async (from: string): Promise<CatalogJson> => {
   return parsed.data;
 };
 
-const isMappableProp = (p: PropJson): boolean =>
-  p.type.kind === 'enum' ||
-  p.type.kind === 'string' ||
-  p.type.kind === 'number' ||
-  p.type.kind === 'boolean';
+/**
+ * Reclassify the raw type string into a Zod-emittable shape that the
+ * F2-prototype classifier missed. The prototype's `classifyType` only handles
+ * literal-string unions, so legitimate cases (`string | undefined`, well-known
+ * `Option[]` arrays, plain `string[]`, ReactNode-as-text, callbacks) all
+ * arrive here flagged `union` or `unknown`. We squeeze out everything we can
+ * without going back to react-docgen-typescript.
+ */
+type ResolvedKind =
+  | { kind: 'enum'; values: string[]; nullable: boolean }
+  | { kind: 'string'; nullable: boolean }
+  | { kind: 'number'; nullable: boolean }
+  | { kind: 'boolean'; nullable: boolean }
+  | { kind: 'string-array'; nullable: boolean }
+  | { kind: 'option-array'; nullable: boolean }
+  | { kind: 'string-or-string-array' }
+  | { kind: 'callback' }
+  | null;
+
+const reclassifyRaw = (raw: string): ResolvedKind => {
+  const s = raw.trim();
+  // T | undefined  /  undefined | T → nullable T
+  const undefMatch =
+    s.match(/^(.+?)\s*\|\s*undefined$/) ?? s.match(/^undefined\s*\|\s*(.+)$/);
+  if (undefMatch) {
+    const inner = reclassifyRaw(undefMatch[1]);
+    if (inner !== null && 'nullable' in inner) {
+      return { ...inner, nullable: true };
+    }
+  }
+  // Plain `string` / `number` / `boolean` (rare but possible passthrough).
+  if (s === 'string') return { kind: 'string', nullable: false };
+  if (s === 'number') return { kind: 'number', nullable: false };
+  if (s === 'boolean') return { kind: 'boolean', nullable: false };
+  // ReactNode → AI fills as text. Runtime tolerates strings.
+  if (s === 'ReactNode') return { kind: 'string', nullable: false };
+  // string[] / readonly string[] → array of string
+  if (s === 'string[]' || s === 'readonly string[]')
+    return { kind: 'string-array', nullable: false };
+  // ArteOdyssey's Option type. react-docgen prints it inlined.
+  if (
+    /^readonly\s+Option\[\]$/.test(s) ||
+    /^Option\[\]$/.test(s) ||
+    /Readonly<\{\s*value:\s*string;\s*label:\s*string\s*[;}]/i.test(s)
+  ) {
+    return { kind: 'option-array', nullable: false };
+  }
+  // Alert.message variant
+  if (s === 'string | string[]') return { kind: 'string-or-string-array' };
+  // Function / event handler types
+  if (/^\(.*\)\s*=>/.test(s) || /Handler<[^>]+>/.test(s)) {
+    return { kind: 'callback' };
+  }
+  return null;
+};
+
+const resolveProp = (p: PropJson): ResolvedKind => {
+  if (p.type.kind === 'enum') {
+    return { kind: 'enum', values: p.type.values, nullable: !p.required };
+  }
+  if (
+    p.type.kind === 'string' ||
+    p.type.kind === 'number' ||
+    p.type.kind === 'boolean'
+  ) {
+    return { kind: p.type.kind, nullable: !p.required };
+  }
+  return reclassifyRaw(p.type.raw);
+};
+
+const isMappableProp = (p: PropJson): boolean => {
+  const r = resolveProp(p);
+  if (r === null) return false;
+  return r.kind !== 'callback';
+};
 
 /**
- * A component is generatable if it has no required-but-unmappable props.
- * Components whose required surface includes ReactNode / function / complex
- * union types stay hand-overridden — putting them in the catalog with the
- * required prop missing would just produce broken specs.
+ * A component is generatable if its required props all resolve to a
+ * Zod-emittable kind. Optional unmappable props (e.g. callback handlers)
+ * are silently dropped — the design system component will use its own
+ * default.
  */
 const isGeneratable = (c: ComponentJson): boolean => {
   if (HAND_OVERRIDDEN_COMPONENTS.has(c.name)) return false;
   for (const prop of c.props) {
-    if (prop.required && !isMappableProp(prop)) return false;
+    if (prop.required) {
+      const r = resolveProp(prop);
+      if (r === null || r.kind === 'callback') return false;
+    }
   }
   return true;
 };
 
-const propToZodSrc = (p: PropJson): string => {
-  if (p.type.kind === 'enum') {
-    return `z.enum(${JSON.stringify(p.type.values)})${p.required ? '' : '.nullable()'}`;
+const nullableSuffix = (nullable: boolean) => (nullable ? '.nullable()' : '');
+
+const propToZodSrc = (p: PropJson): string | null => {
+  const r = resolveProp(p);
+  if (r === null || r.kind === 'callback') return null;
+  switch (r.kind) {
+    case 'enum':
+      return `z.enum(${JSON.stringify(r.values)})${nullableSuffix(r.nullable)}`;
+    case 'string':
+    case 'number':
+    case 'boolean':
+      return `z.${r.kind}()${nullableSuffix(r.nullable)}`;
+    case 'string-array':
+      return `z.array(z.string())${nullableSuffix(r.nullable)}`;
+    case 'option-array':
+      return `z.array(z.object({ value: z.string(), label: z.string() }))${nullableSuffix(r.nullable)}`;
+    case 'string-or-string-array':
+      return 'z.union([z.string(), z.array(z.string())])';
+    default: {
+      const exhaustive: never = r;
+      throw new Error(`unreachable: ${JSON.stringify(exhaustive)}`);
+    }
   }
-  const base = `z.${p.type.kind}()`;
-  return p.required ? base : `${base}.nullable()`;
 };
 
 const escape = (s: string) => JSON.stringify(s);
@@ -151,10 +258,12 @@ const escape = (s: string) => JSON.stringify(s);
 const generateCatalogFile = (catalog: CatalogJson): string => {
   const components = catalog.components.filter(isGeneratable);
   const entries = components.map((c) => {
-    const mappableProps = c.props.filter(isMappableProp);
-    const propLines = mappableProps.map(
-      (p) => `      ${p.name}: ${propToZodSrc(p)},`,
-    );
+    const propLines = c.props
+      .map((p) => {
+        const src = propToZodSrc(p);
+        return src === null ? null : `      ${p.name}: ${src},`;
+      })
+      .filter((line): line is string => line !== null);
     const propsBody =
       propLines.length > 0
         ? `z.object({\n${propLines.join('\n')}\n    })`

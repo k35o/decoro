@@ -20,6 +20,20 @@ const cardProps = z.object({
   appearance: z.enum(['shadow', 'bordered']).nullable(),
 });
 
+const alertProps = z.object({
+  status: z.enum(['success', 'info', 'warning', 'error']),
+  message: z.string(),
+});
+
+const formControlProps = z.object({
+  label: z.string(),
+  helpText: z.string().nullable(),
+  errorText: z.string().nullable(),
+  isDisabled: z.boolean().nullable(),
+  isInvalid: z.boolean().nullable(),
+  isRequired: z.boolean().nullable(),
+});
+
 /**
  * Layout HTML element shape (per ADR-012). The only prop is `className`,
  * constrained at the Zod layer to a curated allowlist so the LLM cannot
@@ -61,6 +75,18 @@ export const catalog = defineCatalog(schema, {
       description:
         'Container for grouping content. Use `appearance: "bordered"` when stacking multiple cards on the same surface, otherwise leave the default shadow.',
     },
+    Alert: {
+      props: alertProps,
+      slots: [],
+      description:
+        'Status alert. Pick `status` by intent: "error" for failures, "warning" for cautions, "info" for informational notices, "success" for confirmations. `message` is a single short string.',
+    },
+    FormControl: {
+      props: formControlProps,
+      slots: ['default'],
+      description:
+        'Labelled wrapper around a single form input. Put exactly one input child (TextField, PasswordInput, NumberField, Select, Textarea, Checkbox, Radio, etc.) inside. Use `helpText` for hints and `errorText` for validation messages.',
+    },
     div: {
       props: layoutElementProps,
       slots: ['default'],
@@ -100,3 +126,5 @@ export const catalog = defineCatalog(schema, {
 export type ButtonProps = z.infer<typeof buttonProps>;
 export type CardProps = z.infer<typeof cardProps>;
 export type LayoutElementProps = z.infer<typeof layoutElementProps>;
+export type AlertProps = z.infer<typeof alertProps>;
+export type FormControlProps = z.infer<typeof formControlProps>;

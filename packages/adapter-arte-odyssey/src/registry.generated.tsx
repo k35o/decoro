@@ -8,10 +8,12 @@ import type {
 import {
   Accordion,
   Anchor,
+  Autocomplete,
   Avatar,
   Badge,
   BaselineStatus,
   Checkbox,
+  CheckboxCard,
   CheckboxGroup,
   Code,
   Form,
@@ -20,17 +22,20 @@ import {
   IconLink,
   InteractiveCard,
   LinkButton,
-  Modal,
   NumberField,
   PasswordInput,
   Progress,
+  Radio,
+  RadioCard,
   ScrollLinked,
+  Select,
   Separator,
   Skeleton,
   Slider,
   Spinner,
   Switch,
   TextField,
+  Textarea,
 } from '@k8o/arte-odyssey';
 import { type ComponentType, createElement } from 'react';
 
@@ -53,6 +58,10 @@ export const generatedRegistry: ComponentRegistry = {
     Anchor as unknown as ComponentType<Record<string, unknown>>,
     'Anchor',
   ),
+  Autocomplete: passthrough(
+    Autocomplete as unknown as ComponentType<Record<string, unknown>>,
+    'Autocomplete',
+  ),
   Avatar: passthrough(
     Avatar as unknown as ComponentType<Record<string, unknown>>,
     'Avatar',
@@ -68,6 +77,10 @@ export const generatedRegistry: ComponentRegistry = {
   Checkbox: passthrough(
     Checkbox as unknown as ComponentType<Record<string, unknown>>,
     'Checkbox',
+  ),
+  CheckboxCard: passthrough(
+    CheckboxCard as unknown as ComponentType<Record<string, unknown>>,
+    'CheckboxCard',
   ),
   CheckboxGroup: passthrough(
     CheckboxGroup as unknown as ComponentType<Record<string, unknown>>,
@@ -101,10 +114,6 @@ export const generatedRegistry: ComponentRegistry = {
     LinkButton as unknown as ComponentType<Record<string, unknown>>,
     'LinkButton',
   ),
-  Modal: passthrough(
-    Modal as unknown as ComponentType<Record<string, unknown>>,
-    'Modal',
-  ),
   NumberField: passthrough(
     NumberField as unknown as ComponentType<Record<string, unknown>>,
     'NumberField',
@@ -117,9 +126,21 @@ export const generatedRegistry: ComponentRegistry = {
     Progress as unknown as ComponentType<Record<string, unknown>>,
     'Progress',
   ),
+  Radio: passthrough(
+    Radio as unknown as ComponentType<Record<string, unknown>>,
+    'Radio',
+  ),
+  RadioCard: passthrough(
+    RadioCard as unknown as ComponentType<Record<string, unknown>>,
+    'RadioCard',
+  ),
   ScrollLinked: passthrough(
     ScrollLinked as unknown as ComponentType<Record<string, unknown>>,
     'ScrollLinked',
+  ),
+  Select: passthrough(
+    Select as unknown as ComponentType<Record<string, unknown>>,
+    'Select',
   ),
   Separator: passthrough(
     Separator as unknown as ComponentType<Record<string, unknown>>,
@@ -144,5 +165,9 @@ export const generatedRegistry: ComponentRegistry = {
   TextField: passthrough(
     TextField as unknown as ComponentType<Record<string, unknown>>,
     'TextField',
+  ),
+  Textarea: passthrough(
+    Textarea as unknown as ComponentType<Record<string, unknown>>,
+    'Textarea',
   ),
 };

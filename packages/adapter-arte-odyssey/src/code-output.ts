@@ -84,6 +84,36 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}</Card>`,
     ].join('\n');
   },
+  Alert: (element, _children, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return propsAttrs
+      ? `${pad(depth)}<Alert ${propsAttrs} />`
+      : `${pad(depth)}<Alert />`;
+  },
+  FormControl: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    if (renderedChildren.length === 0) {
+      return `${pad(depth)}<FormControl ${propsAttrs} renderInput={() => null} />`;
+    }
+    // Wrap rendered children inside a `renderInput={() => (...)}` callback so
+    // the emitted TSX matches ArteOdyssey's actual API. Each child line gets
+    // an extra indent level to nest correctly under the callback body.
+    const reIndented = renderedChildren.map((line) =>
+      line.replace(/^( *)/, (m) => m.concat(pad(2))),
+    );
+    return [
+      `${pad(depth)}<FormControl`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}renderInput={() => (`,
+      ...reIndented,
+      `${pad(depth + 1)})}`,
+      `${pad(depth)}/>`,
+    ].join('\n');
+  },
   div: layoutElementFormatter('div'),
   section: layoutElementFormatter('section'),
   header: layoutElementFormatter('header'),
