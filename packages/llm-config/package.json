@@ -1,0 +1,18 @@
+{
+  "name": "@decoro/llm-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check": "vp check",
+    "check:write": "vp check --fix"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "3.0.71",
+    "ai": "6.0.168"
+  }
+}
