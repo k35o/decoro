@@ -1,0 +1,30 @@
+{
+  "name": "@decoro/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "check": "vp check",
+    "check:write": "vp check --fix"
+  },
+  "dependencies": {
+    "@decoro/adapter-arte-odyssey": "workspace:^",
+    "@decoro/adapter-spec": "workspace:^",
+    "@k8o/arte-odyssey": "7.0.1",
+    "next": "16.2.4",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "24.12.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "postcss": "catalog:"
+  }
+}
