@@ -25,6 +25,10 @@ export const PreviewFrame = ({ spec }: Props) => {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
+      // Origin check alone lets any other same-origin window (devtools panes,
+      // future admin pages, etc.) impersonate the iframe. The source check
+      // pins acceptance to the Window we actually own.
+      if (event.source !== iframeRef.current?.contentWindow) return;
       if (event.origin !== window.location.origin) return;
       if (!isPreviewMessage(event.data)) return;
       if (event.data.type === 'decoro:ready') setReady(true);

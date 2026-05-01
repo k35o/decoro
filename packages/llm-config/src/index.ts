@@ -1,3 +1,10 @@
+// `server-only` is a side-effect import: it has no exports, it just makes
+// the bundler refuse to include this module in client code. Decoro reads
+// API keys from `process.env` here; an accidental import from a client
+// component would compile that env access into the browser bundle and leak
+// the key.
+// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+import 'server-only';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGateway } from '@ai-sdk/gateway';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';

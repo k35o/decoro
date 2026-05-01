@@ -19,7 +19,7 @@
     "@json-render/react": "catalog:",
     "@k8o/arte-odyssey": "catalog:",
     "react": "catalog:",
-    "zod": "4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/react": "catalog:",

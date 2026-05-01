@@ -15,6 +15,9 @@ const PreviewPage = () => {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
+      // Origin check alone lets any same-origin window impersonate the
+      // parent. Pin acceptance to the actual parent Window.
+      if (event.source !== window.parent) return;
       if (event.origin !== window.location.origin) return;
       if (!isPreviewMessage(event.data)) return;
       if (event.data.type === 'decoro:spec') setSpec(event.data.spec);
