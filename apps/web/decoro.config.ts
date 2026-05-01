@@ -13,14 +13,19 @@ import type { LlmConfig } from '@decoro/llm-config';
  *      wiring when this file is consumed from `apps/web` server code.
  *
  * Switching providers is a one-line change. The library design hypothesis
- * (ADR-003) is verified primarily on Anthropic Claude — Google Gemini is
- * wired so contributors without an Anthropic key can still smoke-test.
+ * (ADR-003) is verified primarily on Anthropic Claude — the other branches
+ * are wired so contributors can smoke-test without an Anthropic key.
  *
- * Anthropic (default):
+ * Vercel AI Gateway (default — free monthly credit, one key reaches every
+ * provider, lowest setup friction):
+ *   { provider: 'gateway', model: 'anthropic/claude-sonnet-4-6',
+ *     apiKey: process.env['AI_GATEWAY_API_KEY'] }
+ *
+ * Anthropic direct:
  *   { provider: 'anthropic', model: 'claude-sonnet-4-6',
  *     apiKey: process.env['ANTHROPIC_API_KEY'] }
  *
- * Google Gemini (free tier):
+ * Google Gemini direct (free tier):
  *   { provider: 'google', model: 'gemini-2.5-flash',
  *     apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'] }
  *
@@ -30,7 +35,7 @@ import type { LlmConfig } from '@decoro/llm-config';
  * motivate the abstraction (per ADR-004).
  */
 export const llm: LlmConfig = {
-  provider: 'anthropic',
-  model: 'claude-sonnet-4-6',
-  apiKey: process.env['ANTHROPIC_API_KEY'],
+  provider: 'gateway',
+  model: 'anthropic/claude-sonnet-4-6',
+  apiKey: process.env['AI_GATEWAY_API_KEY'],
 };

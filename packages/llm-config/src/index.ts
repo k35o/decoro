@@ -1,4 +1,5 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGateway } from '@ai-sdk/gateway';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 
@@ -12,10 +13,15 @@ import type { LanguageModel } from 'ai';
  *     (json-render structured output is strongest here).
  *   - `google` is wired so contributors without an Anthropic API key can
  *     still smoke-test on Gemini's free tier.
+ *   - `gateway` routes through Vercel AI Gateway — one key reaches every
+ *     supported provider (model strings look like `anthropic/...`,
+ *     `google/...`, `openai/...`). Vercel ships a free monthly credit, so
+ *     this is usually the lowest-friction path.
  */
 export type LlmConfig =
   | { provider: 'anthropic'; model: string; apiKey?: string }
-  | { provider: 'google'; model: string; apiKey?: string };
+  | { provider: 'google'; model: string; apiKey?: string }
+  | { provider: 'gateway'; model: string; apiKey?: string };
 
 /**
  * Resolve a config into an AI SDK model instance. Server-side only — never
@@ -31,6 +37,10 @@ export const createModel = (config: LlmConfig): LanguageModel => {
     case 'google': {
       const google = createGoogleGenerativeAI({ apiKey: config.apiKey });
       return google(config.model);
+    }
+    case 'gateway': {
+      const gateway = createGateway({ apiKey: config.apiKey });
+      return gateway(config.model);
     }
     default: {
       // Exhaustiveness guard. Adding a new provider must also add a case.
