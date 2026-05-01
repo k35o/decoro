@@ -5,6 +5,10 @@ packages:
 blockExoticSubdeps: true
 
 catalog:
+  '@json-render/codegen': 0.18.0
+  '@json-render/core': 0.18.0
+  '@json-render/react': 0.18.0
+  '@k8o/arte-odyssey': 7.0.1
   '@tailwindcss/postcss': 4.2.4
   '@types/react': 19.2.14
   '@types/react-dom': 19.2.3
@@ -12,6 +16,7 @@ catalog:
   postcss: 8.5.12
   react: 19.2.5
   react-dom: 19.2.5
+  shiki: 4.0.2
   tailwindcss: 4.2.4
   vite-plus: 0.1.19
 

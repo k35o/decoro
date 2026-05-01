@@ -12,6 +12,6 @@
     "check:write": "vp check --fix"
   },
   "dependencies": {
-    "@json-render/core": "0.18.0"
+    "@json-render/core": "catalog:"
   }
 }

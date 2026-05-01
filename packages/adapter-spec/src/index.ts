@@ -1,4 +1,4 @@
-import type { Catalog } from '@json-render/core';
+import type { Catalog, Spec } from '@json-render/core';
 
 /**
  * Free-form description of the target component library, surfaced in the UI
@@ -22,12 +22,15 @@ export type AdapterRegistry<TComponent = unknown> = Record<string, TComponent>;
 /**
  * Hooks an adapter exposes for turning a `json-render` Spec into TSX.
  *
- * Loose by design — refined in M9 (`json-render` codegen wiring) once the
- * concrete needs are known. ADR-004: do not pre-abstract.
+ * - `importPath`: where the generated code imports components from (e.g.
+ *   `'@k8o/arte-odyssey'`).
+ * - `generate(spec)`: returns a single self-contained TSX string. Empty spec
+ *   yields `''`. Per-component formatting (e.g. mapping a `label` prop to
+ *   children for buttons) lives inside the adapter's implementation.
  */
 export type AdapterCodeOutput = {
-  /** Module path the generated TSX imports components from. */
   importPath: string;
+  generate: (spec: Spec) => string;
 };
 
 /**
