@@ -1,5 +1,5 @@
 import type { AdapterCodeOutput } from '@decoro/adapter-spec';
-import { collectUsedComponents, serializeProps } from '@json-render/codegen';
+import { serializeProps } from '@json-render/codegen';
 import type { Spec, UIElement } from '@json-render/core';
 
 const importPath = '@k8o/arte-odyssey';
@@ -61,7 +61,25 @@ const formatters: Record<string, Formatter> = {
   },
 };
 
-const renderElement = (spec: Spec, key: string, depth: number): string => {
+const MAX_DEPTH = 64;
+
+const renderElement = (
+  spec: Spec,
+  key: string,
+  depth: number,
+  visiting: Set<string>,
+  usedTypes: Set<string>,
+): string => {
+  if (depth > MAX_DEPTH) {
+    throw new Error(
+      `adapter-arte-odyssey codegen: spec exceeds max depth ${MAX_DEPTH.toString()}.`,
+    );
+  }
+  if (visiting.has(key)) {
+    throw new Error(
+      `adapter-arte-odyssey codegen: cycle detected at element "${key}".`,
+    );
+  }
   const element = spec.elements[key];
   if (!element) return '';
   const formatter = formatters[element.type];
@@ -70,18 +88,27 @@ const renderElement = (spec: Spec, key: string, depth: number): string => {
       `adapter-arte-odyssey codegen: missing formatter for "${element.type}". Add an entry to formatters in code-output.ts.`,
     );
   }
+  usedTypes.add(element.type);
+  visiting.add(key);
   const children = (element.children ?? [])
-    .map((childKey) => renderElement(spec, childKey, depth + 1))
+    .map((childKey) =>
+      renderElement(spec, childKey, depth + 1, visiting, usedTypes),
+    )
     .filter((s) => s !== '');
+  visiting.delete(key);
   return formatter(element, children, depth);
 };
 
 const generate = (spec: Spec): string => {
   if (spec.root === '' || !spec.elements[spec.root]) return '';
-  const used = [...collectUsedComponents(spec)].toSorted();
-  if (used.length === 0) return '';
+  // Collect types during the same depth-first walk that emits the JSX so
+  // cycles get caught here instead of inside json-render's helper, which
+  // does its own walk without cycle protection.
+  const usedTypes = new Set<string>();
+  const body = renderElement(spec, spec.root, 1, new Set<string>(), usedTypes);
+  if (usedTypes.size === 0) return '';
+  const used = [...usedTypes].toSorted();
   const importLine = `import { ${used.join(', ')} } from '${importPath}';`;
-  const body = renderElement(spec, spec.root, 1);
   return [
     importLine,
     '',

@@ -62,6 +62,29 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('</Card>');
   });
 
+  it('throws on a spec containing an unknown component type', () => {
+    expect(() =>
+      arteOdysseyAdapter.codeOutput.generate({
+        root: 'unknown',
+        elements: {
+          unknown: { type: 'NotInCatalog', props: {}, children: [] },
+        },
+      }),
+    ).toThrow(/missing formatter for "NotInCatalog"/);
+  });
+
+  it('throws on a spec with a cycle in the children graph', () => {
+    expect(() =>
+      arteOdysseyAdapter.codeOutput.generate({
+        root: 'a',
+        elements: {
+          a: { type: 'Card', props: {}, children: ['b'] },
+          b: { type: 'Card', props: {}, children: ['a'] },
+        },
+      }),
+    ).toThrow(/cycle detected/);
+  });
+
   it('escapes JSX-significant characters in Button labels', () => {
     const tsx = arteOdysseyAdapter.codeOutput.generate({
       root: 'btn',
