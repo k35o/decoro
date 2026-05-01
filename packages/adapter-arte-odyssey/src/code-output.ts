@@ -114,6 +114,46 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}/>`,
     ].join('\n');
   },
+  Drawer: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return [
+      `${pad(depth)}<Drawer`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onClose to your own dismissal state`,
+      `${pad(depth + 1)}onClose={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</Drawer>`,
+    ].join('\n');
+  },
+  Modal: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    const opener = propsAttrs ? `<Modal ${propsAttrs}` : '<Modal';
+    return [
+      `${pad(depth)}${opener}`,
+      `${pad(depth + 1)}// TODO: wire onClose to your own dismissal state`,
+      `${pad(depth + 1)}onClose={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</Modal>`,
+    ].join('\n');
+  },
+  Pagination: (element, _children, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    return [
+      `${pad(depth)}<Pagination`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onPageChange to your routing / data fetch`,
+      `${pad(depth + 1)}onPageChange={(_page) => {}}`,
+      `${pad(depth)}/>`,
+    ].join('\n');
+  },
   div: layoutElementFormatter('div'),
   section: layoutElementFormatter('section'),
   header: layoutElementFormatter('header'),

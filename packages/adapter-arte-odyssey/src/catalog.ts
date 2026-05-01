@@ -34,6 +34,25 @@ const formControlProps = z.object({
   isRequired: z.boolean().nullable(),
 });
 
+const drawerProps = z.object({
+  title: z.string(),
+  isOpen: z.boolean().nullable(),
+  side: z.enum(['left', 'right']).nullable(),
+});
+
+const modalProps = z.object({
+  type: z.enum(['center', 'bottom', 'right', 'left']).nullable(),
+  isOpen: z.boolean().nullable(),
+});
+
+const paginationProps = z.object({
+  totalPages: z.number(),
+  currentPage: z.number(),
+  isDisabled: z.boolean().nullable(),
+  prevLabel: z.string().nullable(),
+  nextLabel: z.string().nullable(),
+});
+
 /**
  * Layout HTML element shape (per ADR-012). The only prop is `className`,
  * constrained at the Zod layer to a curated allowlist so the LLM cannot
@@ -87,6 +106,24 @@ export const catalog = defineCatalog(schema, {
       description:
         'Labelled wrapper around a single form input. Put exactly one input child (TextField, PasswordInput, NumberField, Select, Textarea, Checkbox, Radio, etc.) inside. Use `helpText` for hints and `errorText` for validation messages.',
     },
+    Drawer: {
+      props: drawerProps,
+      slots: ['default'],
+      description:
+        'Side-attached overlay panel. `side="right"` (default) for help / settings panes, `side="left"` for navigation drawers. `isOpen` defaults to true so the preview shows the rendered state; the generated TSX wires it into your own state.',
+    },
+    Modal: {
+      props: modalProps,
+      slots: ['default'],
+      description:
+        'Centered (default) or edge-attached dialog. Pick `type` based on the experience: "center" for confirmations, "bottom" for sheet-style action menus, "right"/"left" for slide-overs. `isOpen` defaults to true so the preview shows the rendered state.',
+    },
+    Pagination: {
+      props: paginationProps,
+      slots: [],
+      description:
+        'Pagination control with prev / next buttons. `totalPages` and `currentPage` are required (1-based). `prevLabel` / `nextLabel` default to Japanese labels in ArteOdyssey; override for English UIs.',
+    },
     div: {
       props: layoutElementProps,
       slots: ['default'],
@@ -128,3 +165,6 @@ export type CardProps = z.infer<typeof cardProps>;
 export type LayoutElementProps = z.infer<typeof layoutElementProps>;
 export type AlertProps = z.infer<typeof alertProps>;
 export type FormControlProps = z.infer<typeof formControlProps>;
+export type DrawerProps = z.infer<typeof drawerProps>;
+export type ModalProps = z.infer<typeof modalProps>;
+export type PaginationProps = z.infer<typeof paginationProps>;

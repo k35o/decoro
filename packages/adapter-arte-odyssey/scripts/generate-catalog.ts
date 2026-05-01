@@ -84,9 +84,10 @@ type PropJson = z.infer<typeof propEntrySchema>;
  * - Card: tight enum surface (shadow/bordered) + slot.
  * - Alert: `message: string | string[]` shape that does not lower cleanly.
  * - FormControl: `renderInput` is a render-prop that needs slot composition.
- * - Drawer / Modal: required `onClose` callback; needs json-render `actions`
- *   wiring and a no-op default for the preview path.
- * - Pagination: required `onPageChange` callback; same as Drawer.
+ * - Drawer / Modal: required `onClose` callback. Hand-override installs a
+ *   no-op default in the preview path; codegen emits `onClose={() => {}}`
+ *   with a TODO so the user wires their own dismissal state.
+ * - Pagination: required `onPageChange` callback; same approach as Drawer.
  *
  * Add to this set whenever a generated entry needs a hand override.
  */
