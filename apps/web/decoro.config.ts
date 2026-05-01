@@ -35,7 +35,7 @@ import type { LlmConfig } from '@decoro/llm-config';
  * motivate the abstraction (per ADR-004).
  */
 export const llm: LlmConfig = {
-  provider: 'gateway',
-  model: 'anthropic/claude-sonnet-4-6',
-  apiKey: process.env['AI_GATEWAY_API_KEY'],
+  provider: 'google',
+  model: 'gemini-2.5-flash',
+  apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'],
 };
