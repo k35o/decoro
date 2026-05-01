@@ -2,13 +2,49 @@ import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import { createModel } from '@decoro/llm-config';
 import { type Spec, buildUserPrompt } from '@json-render/core';
 import { type ModelMessage, streamText } from 'ai';
+import { z } from 'zod';
 
 import { llm } from '../../../../decoro.config.ts';
 
-type GenerateRequestBody = {
-  messages: ModelMessage[];
-  currentSpec?: Spec | null;
-};
+// Limits sized for "self-hosted, trusted-network MVP". Generous enough that
+// real chat sessions never bump them, tight enough that a runaway client or
+// hostile insider cannot DoS the endpoint or rack up an unbounded LLM bill.
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_CHARS = 4000;
+const MAX_SPEC_ELEMENTS = 200;
+const MAX_ELEMENT_CHILDREN = 50;
+const MAX_COMPONENT_TYPE_CHARS = 50;
+
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string().min(1).max(MAX_MESSAGE_CHARS),
+});
+
+const elementSchema = z.object({
+  type: z.string().min(1).max(MAX_COMPONENT_TYPE_CHARS),
+  props: z.record(z.string(), z.unknown()),
+  children: z.array(z.string()).max(MAX_ELEMENT_CHILDREN),
+  visible: z.unknown().optional(),
+});
+
+const specSchema = z
+  .object({
+    root: z.string(),
+    elements: z
+      .record(z.string(), elementSchema)
+      .refine(
+        (e) => Object.keys(e).length <= MAX_SPEC_ELEMENTS,
+        `spec exceeds max ${MAX_SPEC_ELEMENTS.toString()} elements`,
+      ),
+    state: z.unknown().optional(),
+  })
+  .nullable()
+  .optional();
+
+const requestSchema = z.object({
+  messages: z.array(messageSchema).min(1).max(MAX_MESSAGES),
+  currentSpec: specSchema,
+});
 
 const systemPrompt = [
   arteOdysseyAdapter.catalog.prompt({ mode: 'standalone' }),
@@ -20,6 +56,12 @@ const systemPrompt = [
 const isMeaningfulSpec = (spec: Spec | null | undefined): spec is Spec =>
   spec !== null && spec !== undefined && spec.root !== '';
 
+const jsonError = (status: number, message: string) =>
+  new Response(JSON.stringify({ message }), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+
 /**
  * POST /api/generate streams the LLM's raw text output back to the client.
  *
@@ -27,28 +69,48 @@ const isMeaningfulSpec = (spec: Spec | null | undefined): spec is Spec =>
  * instructs the model to emit json-render JSON patches one per line, which
  * the client's `useDecoroChat` hook consumes via `createMixedStreamParser`.
  *
- * For iteration (M8): when `currentSpec` is supplied and non-empty, the last
- * user message is rewritten through `buildUserPrompt` so it includes the
- * current spec as edit context. Earlier messages stay verbatim — they were
- * past requests the model already satisfied.
+ * For iteration: when `currentSpec` is supplied and non-empty, the last user
+ * message is rewritten through `buildUserPrompt` so it includes the current
+ * spec as edit context. Earlier messages stay verbatim.
  *
- * We deliberately do NOT wrap the response in `createUIMessageStream` /
- * `pipeJsonRender`. That pairing produces AI SDK's UI Message Stream
- * format (with `data-spec` SSE parts), which `useDecoroChat` /
- * `createMixedStreamParser` does not parse — pick that setup only when
- * migrating to AI SDK's own `useChat`.
+ * Input is validated with zod and capped (messages count / per-message
+ * length / spec element count) so a runaway client cannot DoS the endpoint
+ * or rack up an unbounded LLM bill.
  */
 export const POST = async (req: Request) => {
-  const body = (await req.json()) as GenerateRequestBody;
-  const augmented = augmentLastUserMessage(body.messages, body.currentSpec);
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return jsonError(400, 'Request body must be valid JSON');
+  }
 
-  const result = streamText({
-    model: createModel(llm),
-    system: systemPrompt,
-    messages: augmented,
-  });
+  const parsed = requestSchema.safeParse(raw);
+  if (!parsed.success) {
+    return jsonError(400, parsed.error.message);
+  }
 
-  return result.toTextStreamResponse();
+  // The zod schema enforces shape and size limits; downstream consumers
+  // (json-render's buildUserPrompt, the registry) accept the wider Spec
+  // type. Cast is safe — anything the schema accepts is structurally a Spec.
+  const augmented = augmentLastUserMessage(
+    parsed.data.messages,
+    (parsed.data.currentSpec ?? null) as Spec | null,
+  );
+
+  try {
+    const result = streamText({
+      model: createModel(llm),
+      system: systemPrompt,
+      messages: augmented,
+    });
+    return result.toTextStreamResponse();
+  } catch (err) {
+    return jsonError(
+      500,
+      err instanceof Error ? err.message : 'Failed to start generation',
+    );
+  }
 };
 
 const augmentLastUserMessage = (

@@ -19,6 +19,7 @@ catalog:
   shiki: 4.0.2
   tailwindcss: 4.2.4
   vite-plus: 0.1.19
+  zod: 4.3.6
 
 allowBuilds:
   esbuild: false

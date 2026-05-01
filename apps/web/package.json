@@ -24,7 +24,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "shiki": "catalog:",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",
