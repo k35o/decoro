@@ -34,8 +34,14 @@ const formatters: Record<string, Formatter> = {
     } & Record<string, unknown>;
     const propsAttrs = serializeProps(stripNullish(rest), { quotes: 'double' });
     const open = propsAttrs ? `<Button ${propsAttrs}>` : '<Button>';
+    // Wrap the label in a JSX expression containing a JS string literal so
+    // labels with JSX-significant characters (`<`, `>`, `&`, `{`, `}`,
+    // quotes) emit valid TSX. React escapes these in the preview path, but
+    // the textual output that ends up in the user's codebase has to be safe
+    // on its own. JSON.stringify is the simplest canonical "JS string
+    // literal" formatter.
     const labelText = typeof label === 'string' ? label : '';
-    return `${pad(depth)}${open}${labelText}</Button>`;
+    return `${pad(depth)}${open}{${JSON.stringify(labelText)}}</Button>`;
   },
   Card: (element, renderedChildren, depth) => {
     const propsAttrs = serializeProps(stripNullish(element.props), {

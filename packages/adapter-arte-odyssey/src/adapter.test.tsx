@@ -57,9 +57,33 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('export const GeneratedComponent');
     expect(tsx).toContain('<Card appearance="shadow">');
     expect(tsx).toContain(
-      '<Button color="primary" variant="contained">Save</Button>',
+      '<Button color="primary" variant="contained">{"Save"}</Button>',
     );
     expect(tsx).toContain('</Card>');
+  });
+
+  it('escapes JSX-significant characters in Button labels', () => {
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'btn',
+      elements: {
+        btn: {
+          type: 'Button',
+          props: {
+            label: 'Save & Close <"now">',
+            color: null,
+            variant: null,
+            type: null,
+            size: null,
+            fullWidth: null,
+            disabled: null,
+          },
+          children: [],
+        },
+      },
+    });
+    // Wrapped in a JSX expression with a JS string literal — valid TSX even
+    // though the label contains `<`, `&`, `>`, and quotes.
+    expect(tsx).toContain('<Button>{"Save & Close <\\"now\\">"}</Button>');
   });
 
   it('renders Card via the registry', () => {
