@@ -1,18 +1,11 @@
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import { createModel } from '@decoro/llm-config';
-import type { Spec } from '@json-render/core';
-import { buildUserPrompt, pipeJsonRender } from '@json-render/core';
-import {
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  streamText,
-} from 'ai';
+import { type ModelMessage, streamText } from 'ai';
 
 import { llm } from '../../../../decoro.config.ts';
 
 type GenerateRequestBody = {
-  prompt: string;
-  currentSpec?: Spec | null;
+  messages: ModelMessage[];
 };
 
 const systemPrompt = [
@@ -22,23 +15,25 @@ const systemPrompt = [
   arteOdysseyAdapter.metadata.designPrinciples,
 ].join('\n');
 
+/**
+ * Streams the LLM's raw text output back to the client. The system prompt
+ * (built by `catalog.prompt({ mode: 'standalone' })`) instructs the model to
+ * emit json-render JSON patches one per line, which `useChatUI`'s
+ * `createMixedStreamParser` consumes directly.
+ *
+ * We deliberately do NOT wrap the result in `createUIMessageStream` /
+ * `pipeJsonRender` — that pairing produces AI SDK's UI Message Stream format
+ * (with `data-spec` SSE parts), which `useChatUI` does not parse. Pick that
+ * setup only when migrating to AI SDK's own `useChat` hook.
+ */
 export const POST = async (req: Request) => {
   const body = (await req.json()) as GenerateRequestBody;
 
   const result = streamText({
     model: createModel(llm),
     system: systemPrompt,
-    prompt: buildUserPrompt({
-      prompt: body.prompt,
-      currentSpec: body.currentSpec ?? undefined,
-    }),
+    messages: body.messages,
   });
 
-  const stream = createUIMessageStream({
-    execute: ({ writer }) => {
-      writer.merge(pipeJsonRender(result.toUIMessageStream()));
-    },
-  });
-
-  return createUIMessageStreamResponse({ stream });
+  return result.toTextStreamResponse();
 };
