@@ -4,7 +4,12 @@ import { defineConfig } from 'vite-plus';
 export default defineConfig({
   fmt: {
     ...fmt,
-    ignorePatterns: ['CHANGELOG.md', '.claude/**', 'pnpm-lock.yaml'],
+    ignorePatterns: [
+      'CHANGELOG.md',
+      '.claude/**',
+      'pnpm-lock.yaml',
+      '**/.next/**',
+    ],
   },
   lint: {
     extends: [nextjs, tailwind],

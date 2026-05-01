@@ -9,12 +9,15 @@ import {
 } from '../lib/preview-message.ts';
 
 type Props = {
-  spec: Spec;
+  spec: Spec | null;
 };
 
 /**
  * Hosts the `/preview` page in an iframe and pushes the current Spec into it
  * via postMessage. Re-sends whenever `spec` changes after the iframe is ready.
+ *
+ * `spec === null` means the user has not asked for anything yet — leave the
+ * iframe in its built-in "Waiting for a spec…" state instead of posting.
  */
 export const PreviewFrame = ({ spec }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -33,7 +36,7 @@ export const PreviewFrame = ({ spec }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || spec === null) return;
     const message: PreviewInboundMessage = { type: 'decoro:spec', spec };
     iframeRef.current?.contentWindow?.postMessage(
       message,
