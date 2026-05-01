@@ -9,7 +9,7 @@ catalog:
   '@types/react': 19.2.14
   '@types/react-dom': 19.2.3
   '@vitejs/plugin-react': 6.0.1
-  postcss: 8.5.10
+  postcss: 8.5.12
   react: 19.2.5
   react-dom: 19.2.5
   tailwindcss: 4.2.4
@@ -18,6 +18,12 @@ catalog:
 allowBuilds:
   esbuild: false
   sharp: false
+
+overrides:
+  # next@16.2.4 pulls postcss@8.4.31 transitively, which is vulnerable to
+  # GHSA-7fh5-64p2-3v2j (XSS via unescaped </style>). Force 8.5.10+ until
+  # Next.js bumps it upstream.
+  postcss: '>=8.5.10'
 
 verifyDepsBeforeRun: install
 
