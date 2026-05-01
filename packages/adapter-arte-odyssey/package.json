@@ -14,9 +14,10 @@
   },
   "dependencies": {
     "@decoro/adapter-spec": "workspace:^",
-    "@json-render/core": "0.18.0",
-    "@json-render/react": "0.18.0",
-    "@k8o/arte-odyssey": "7.0.1",
+    "@json-render/codegen": "catalog:",
+    "@json-render/core": "catalog:",
+    "@json-render/react": "catalog:",
+    "@k8o/arte-odyssey": "catalog:",
     "react": "catalog:",
     "zod": "4.3.6"
   },
