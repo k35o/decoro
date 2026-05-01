@@ -2,6 +2,7 @@
 
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
+import { Button } from '@k8o/arte-odyssey';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { codeToHtml } from 'shiki';
 
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const PLACEHOLDER = 'Generated TSX appears here.';
+const COPY_FEEDBACK_MS = 2000;
 
 type CodeState =
   | { kind: 'empty' }
@@ -18,8 +20,8 @@ type CodeState =
 
 /**
  * Renders the current Spec as TSX, syntax-highlighted with Shiki. Updates
- * incrementally as the spec changes. M10 will add the copy-to-clipboard
- * button.
+ * incrementally as the spec changes. The Copy button writes the raw TSX to
+ * the clipboard and shows "Copied!" inline for a couple of seconds.
  *
  * Streaming sometimes hands us an inconsistent intermediate spec — a child
  * key that hasn't landed yet, an unknown component type, or (theoretically)
@@ -41,6 +43,9 @@ export const CodePanel = ({ spec }: Props) => {
     }
   }, [spec]);
   const [html, setHtml] = useState('');
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+    'idle',
+  );
 
   const generationRef = useRef(0);
   useEffect(() => {
@@ -59,6 +64,38 @@ export const CodePanel = ({ spec }: Props) => {
     })();
   }, [code]);
 
+  useEffect(() => {
+    const timer =
+      copyState === 'idle'
+        ? null
+        : setTimeout(() => {
+            setCopyState('idle');
+          }, COPY_FEEDBACK_MS);
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+    };
+  }, [copyState]);
+
+  const onCopy = async () => {
+    if (code.kind !== 'ok') return;
+    try {
+      await navigator.clipboard.writeText(code.value);
+      setCopyState('copied');
+    } catch {
+      // Permission revoked, document not focused, http (no clipboard API), …
+      // Surface inline so the user knows to fall back to manual copy rather
+      // than silently looking at unchanged button text.
+      setCopyState('failed');
+    }
+  };
+
+  const copyLabel =
+    copyState === 'copied'
+      ? 'Copied!'
+      : copyState === 'failed'
+        ? 'Copy failed'
+        : 'Copy';
+
   if (code.kind === 'empty') {
     return <p className="text-fg-mute p-4 text-sm">{PLACEHOLDER}</p>;
   }
@@ -70,14 +107,24 @@ export const CodePanel = ({ spec }: Props) => {
     );
   }
 
-  // Shiki output is HTML we generated ourselves from a string we generated
-  // ourselves; it never contains user-controlled content. Disabling
-  // dangerouslySetInnerHTML's lint here is the canonical Shiki integration.
   return (
-    <div
-      className="text-sm [&_pre]:overflow-auto [&_pre]:p-4"
-      // oxlint-disable-next-line eslint(react/no-danger)
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className="relative h-full">
+      <div className="absolute top-2 right-2 z-10">
+        <Button size="sm" variant="outlined" onAction={onCopy}>
+          {copyLabel}
+        </Button>
+      </div>
+      {/*
+        Shiki output is HTML we generated ourselves from a string we
+        generated ourselves; it never contains user-controlled content.
+        Disabling dangerouslySetInnerHTML's lint here is the canonical
+        Shiki integration.
+      */}
+      <div
+        className="text-sm [&_pre]:overflow-auto [&_pre]:p-4"
+        // oxlint-disable-next-line eslint(react/no-danger)
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
   );
 };
