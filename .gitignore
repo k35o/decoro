@@ -50,7 +50,7 @@ next-env.d.ts
 
 # Local-only Claude / settings
 .plan
-.claude/settings.local.json
+.claude/
 settings.local.json
 
 # Design docs are kept local-only for now
