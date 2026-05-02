@@ -3,6 +3,7 @@
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
 import { JSONUIProvider, Renderer } from '@json-render/react';
+import { SparklesIcon } from '@k8o/arte-odyssey';
 import { useEffect, useState } from 'react';
 
 import {
@@ -33,13 +34,26 @@ const PreviewPage = () => {
   }, []);
 
   return (
-    <div className="bg-bg-base text-fg-base min-h-dvh p-6">
+    <div className="bg-bg-base text-fg-base min-h-dvh">
       {spec ? (
-        <JSONUIProvider registry={arteOdysseyAdapter.registry}>
-          <Renderer spec={spec} registry={arteOdysseyAdapter.registry} />
-        </JSONUIProvider>
+        <div className="p-6">
+          <JSONUIProvider registry={arteOdysseyAdapter.registry}>
+            <Renderer spec={spec} registry={arteOdysseyAdapter.registry} />
+          </JSONUIProvider>
+        </div>
       ) : (
-        <p className="text-fg-mute">Waiting for a spec from the parent…</p>
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
+          <span className="text-primary-fg" aria-hidden="true">
+            <SparklesIcon size="lg" />
+          </span>
+          <p className="text-fg-base text-base font-medium">
+            Your generated UI will appear here
+          </p>
+          <p className="text-fg-mute max-w-md text-sm">
+            Describe a screen on the left — Decoro renders it live with
+            ArteOdyssey components.
+          </p>
+        </div>
       )}
     </div>
   );

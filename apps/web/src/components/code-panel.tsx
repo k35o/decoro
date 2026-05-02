@@ -2,7 +2,7 @@
 
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
-import { Button } from '@k8o/arte-odyssey';
+import { Button, CopyIcon } from '@k8o/arte-odyssey';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { codeToHtml } from 'shiki';
 
@@ -10,7 +10,6 @@ type Props = {
   spec: Spec | null;
 };
 
-const PLACEHOLDER = 'Generated TSX appears here.';
 const COPY_FEEDBACK_MS = 2000;
 
 type CodeState =
@@ -97,20 +96,32 @@ export const CodePanel = ({ spec }: Props) => {
         : 'Copy';
 
   if (code.kind === 'empty') {
-    return <p className="text-fg-mute p-4 text-sm">{PLACEHOLDER}</p>;
+    return (
+      <div className="text-fg-subtle flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+        <p className="text-sm">
+          Generated TSX will appear here once you describe a UI.
+        </p>
+      </div>
+    );
   }
   if (code.kind === 'error') {
     return (
-      <p className="text-fg-mute p-4 text-sm" role="alert">
+      <p className="text-fg-mute p-6 text-sm" role="alert">
         Code generation paused: {code.message}
       </p>
     );
   }
 
   return (
-    <div className="relative h-full">
-      <div className="absolute top-2 right-2 z-10">
-        <Button size="sm" variant="outlined" onAction={onCopy}>
+    <div className="bg-bg-surface relative h-full">
+      <div className="absolute top-3 right-3 z-10">
+        <Button
+          size="sm"
+          variant="outlined"
+          color="gray"
+          onAction={onCopy}
+          startIcon={<CopyIcon size="sm" />}
+        >
           {copyLabel}
         </Button>
       </div>
@@ -121,7 +132,7 @@ export const CodePanel = ({ spec }: Props) => {
         Shiki integration.
       */}
       <div
-        className="text-sm [&_pre]:overflow-auto [&_pre]:p-4"
+        className="text-sm [&_pre]:overflow-auto [&_pre]:p-6"
         // oxlint-disable-next-line eslint(react/no-danger)
         dangerouslySetInnerHTML={{ __html: html }}
       />

@@ -46,11 +46,26 @@ const requestSchema = z.object({
   currentSpec: specSchema,
 });
 
+// Ask the model to prefix the JSONL stream with a single short natural-
+// language line summarizing what it's building. The chat pane surfaces this
+// line back to the user as the assistant's "answer" — without it, the only
+// visible feedback is the rendered preview, which feels mute mid-stream.
+// `createMixedStreamParser` already distinguishes JSONL patch lines from
+// prose, so the extra line lands in `onText` without disturbing patches.
+const responsePreambleInstruction = [
+  'Response format:',
+  '- First, output exactly ONE short sentence (≤ 15 words) describing what you are building or changing in this turn. Plain prose, no JSON. End with a newline.',
+  '- Then emit the JSONL patch lines as instructed above.',
+  '- Do not emit any prose between or after the patches.',
+].join('\n');
+
 const systemPrompt = [
   arteOdysseyAdapter.catalog.prompt({ mode: 'standalone' }),
   '',
   'Library design principles:',
   arteOdysseyAdapter.metadata.designPrinciples,
+  '',
+  responsePreambleInstruction,
 ].join('\n');
 
 const isMeaningfulSpec = (spec: Spec | null | undefined): spec is Spec =>
