@@ -1,10 +1,11 @@
 'use client';
 
-import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
-import { Button, CopyIcon } from '@k8o/arte-odyssey';
+import { Button, CopyIcon, SparklesIcon } from '@k8o/arte-odyssey';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { codeToHtml } from 'shiki';
+
+import { adapter } from '../../decoro.config.ts';
 
 type Props = {
   spec: Spec | null;
@@ -32,7 +33,7 @@ export const CodePanel = ({ spec }: Props) => {
   const code = useMemo<CodeState>(() => {
     if (spec === null) return { kind: 'empty' };
     try {
-      const value = arteOdysseyAdapter.codeOutput.generate(spec);
+      const value = adapter.codeOutput.generate(spec);
       return value === '' ? { kind: 'empty' } : { kind: 'ok', value };
     } catch (err) {
       return {
@@ -97,9 +98,16 @@ export const CodePanel = ({ spec }: Props) => {
 
   if (code.kind === 'empty') {
     return (
-      <div className="text-fg-subtle flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-        <p className="text-sm">
-          Generated TSX will appear here once you describe a UI.
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <span className="text-primary-fg" aria-hidden="true">
+          <SparklesIcon size="lg" />
+        </span>
+        <p className="text-fg-base text-base font-medium">
+          Generated TSX will appear here
+        </p>
+        <p className="text-fg-mute max-w-md text-sm">
+          Describe a screen on the left — Decoro renders it live and shows the
+          matching ArteOdyssey TSX you can copy.
         </p>
       </div>
     );

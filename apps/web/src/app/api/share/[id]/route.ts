@@ -1,3 +1,4 @@
+import { jsonError } from '../../../../lib/api-response.ts';
 import { getSnapshot } from '../../../../lib/share-store.ts';
 
 /**
@@ -12,12 +13,7 @@ export const GET = async (
 ) => {
   const { id } = await ctx.params;
   const snapshot = await getSnapshot(id);
-  if (!snapshot) {
-    return new Response(JSON.stringify({ message: 'not found' }), {
-      status: 404,
-      headers: { 'content-type': 'application/json' },
-    });
-  }
+  if (!snapshot) return jsonError(404, 'not found');
   return new Response(JSON.stringify(snapshot), {
     status: 200,
     headers: {

@@ -10,11 +10,7 @@ import {
 } from '@k8o/arte-odyssey';
 import { useState } from 'react';
 
-export type ChatMessage = {
-  id: string;
-  role: 'user' | 'assistant';
-  text: string;
-};
+import type { ChatMessage } from '../lib/chat-types.ts';
 
 type Props = {
   messages: ChatMessage[];
