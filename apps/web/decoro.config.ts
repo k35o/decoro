@@ -39,3 +39,19 @@ export const llm: LlmConfig = {
   model: 'gemini-2.5-flash',
   apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'],
 };
+
+/**
+ * Share-snapshot configuration (see ADR-013).
+ *
+ * `publicBaseUrl` is the absolute origin Decoro should use when handing out
+ * shareable URLs (e.g. `https://decoro.example.com`). When unset, the share
+ * route falls back to `X-Forwarded-Proto` + `X-Forwarded-Host` (or `Host`)
+ * — fine for plain `pnpm dev` and most reverse-proxy setups, but if your
+ * proxy strips those headers the URL handed back to clients won't be
+ * reachable from outside the box. Set this explicitly in that case.
+ *
+ * No trailing slash.
+ */
+export const share = {
+  publicBaseUrl: process.env['DECORO_PUBLIC_BASE_URL'],
+} as const;
