@@ -63,6 +63,30 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('</Card>');
   });
 
+  it('strips props the catalog schema does not declare (e.g. className on Card)', () => {
+    // Regression: the LLM occasionally hallucinates `className` on
+    // ArteOdyssey components like Card / Button that don't accept it,
+    // producing TSX that fails to compile when pasted into a real codebase.
+    // Codegen runs every element's props through its catalog schema before
+    // serialising; Zod's default safeParse drops unknown keys.
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'card-1',
+      elements: {
+        'card-1': {
+          type: 'Card',
+          props: {
+            width: 'fit',
+            appearance: 'shadow',
+            className: 'p-6 max-w-sm mx-auto my-12',
+          },
+          children: [],
+        },
+      },
+    });
+    expect(tsx).not.toContain('className=');
+    expect(tsx).toContain('<Card width="fit" appearance="shadow" />');
+  });
+
   it('throws on a spec containing an unknown component type', () => {
     expect(() =>
       arteOdysseyAdapter.codeOutput.generate({

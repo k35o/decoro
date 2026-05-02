@@ -1,7 +1,9 @@
 import type { AdapterCodeOutput } from '@decoro/adapter-spec';
 import { serializeProps } from '@json-render/codegen';
-import type { Spec } from '@json-render/core';
+import type { Spec, UIElement } from '@json-render/core';
+import type { z } from 'zod';
 
+import { catalog } from './catalog.ts';
 import {
   GENERATED_IMPORT_TAGS,
   generatedFormatters,
@@ -162,6 +164,31 @@ const formatters: Record<string, Formatter> = {
 
 const MAX_DEPTH = 64;
 
+/**
+ * Strip props that the catalog's Zod schema for this component does not
+ * declare. Zod `safeParse` defaults to dropping unknown keys, so a
+ * successful parse returns the same shape minus anything the LLM hallucinated
+ * (e.g. `className` on `<Card>`, which ArteOdyssey's Card does not accept —
+ * pasting that into a real codebase fails to compile).
+ *
+ * Falls back to the original props on parse failure so a single bad value
+ * doesn't break codegen for the rest of the spec — the user still gets
+ * something to work with even if a prop is malformed.
+ */
+const catalogComponents = (
+  catalog.data as { components: Record<string, { props: z.ZodType }> }
+).components;
+
+const sanitizeProps = (
+  type: string,
+  props: Record<string, unknown>,
+): Record<string, unknown> => {
+  const schema = catalogComponents[type]?.props;
+  if (!schema) return props;
+  const result = schema.safeParse(props);
+  return result.success ? (result.data as Record<string, unknown>) : props;
+};
+
 const renderElement = (
   spec: Spec,
   key: string,
@@ -195,7 +222,11 @@ const renderElement = (
     )
     .filter((s) => s !== '');
   visiting.delete(key);
-  return formatter(element, children, depth);
+  const sanitized: UIElement = {
+    ...element,
+    props: sanitizeProps(element.type, element.props),
+  };
+  return formatter(sanitized, children, depth);
 };
 
 const generate = (spec: Spec): string => {
