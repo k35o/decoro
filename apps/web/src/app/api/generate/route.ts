@@ -5,45 +5,25 @@ import { type ModelMessage, streamText } from 'ai';
 import { z } from 'zod';
 
 import { llm } from '../../../../decoro.config.ts';
+import { jsonError } from '../../../lib/api-response.ts';
+import {
+  MAX_MESSAGE_CHARS,
+  MAX_MESSAGES,
+  specSchema,
+  toSpec,
+} from '../../../lib/spec-schema.ts';
 
-// Limits sized for "self-hosted, trusted-network MVP". Generous enough that
-// real chat sessions never bump them, tight enough that a runaway client or
-// hostile insider cannot DoS the endpoint or rack up an unbounded LLM bill.
-const MAX_MESSAGES = 50;
-const MAX_MESSAGE_CHARS = 4000;
-const MAX_SPEC_ELEMENTS = 200;
-const MAX_ELEMENT_CHILDREN = 50;
-const MAX_COMPONENT_TYPE_CHARS = 50;
-
+// `messageSchema` shape is local to this route — the LLM API takes
+// `{role, content}` with a `system` role; the chat / share path uses
+// `{id, role, text}` (see share-types.ts). Same per-message char limit.
 const messageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1).max(MAX_MESSAGE_CHARS),
 });
 
-const elementSchema = z.object({
-  type: z.string().min(1).max(MAX_COMPONENT_TYPE_CHARS),
-  props: z.record(z.string(), z.unknown()),
-  children: z.array(z.string()).max(MAX_ELEMENT_CHILDREN),
-  visible: z.unknown().optional(),
-});
-
-const specSchema = z
-  .object({
-    root: z.string(),
-    elements: z
-      .record(z.string(), elementSchema)
-      .refine(
-        (e) => Object.keys(e).length <= MAX_SPEC_ELEMENTS,
-        `spec exceeds max ${MAX_SPEC_ELEMENTS.toString()} elements`,
-      ),
-    state: z.unknown().optional(),
-  })
-  .nullable()
-  .optional();
-
 const requestSchema = z.object({
   messages: z.array(messageSchema).min(1).max(MAX_MESSAGES),
-  currentSpec: specSchema,
+  currentSpec: specSchema.nullable().optional(),
 });
 
 // Ask the model to prefix the JSONL stream with a single short natural-
@@ -70,12 +50,6 @@ const systemPrompt = [
 
 const isMeaningfulSpec = (spec: Spec | null | undefined): spec is Spec =>
   spec !== null && spec !== undefined && spec.root !== '';
-
-const jsonError = (status: number, message: string) =>
-  new Response(JSON.stringify({ message }), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
 
 /**
  * POST /api/generate streams the LLM's raw text output back to the client.
@@ -105,13 +79,10 @@ export const POST = async (req: Request) => {
     return jsonError(400, parsed.error.message);
   }
 
-  // The zod schema enforces shape and size limits; downstream consumers
-  // (json-render's buildUserPrompt, the registry) accept the wider Spec
-  // type. Cast is safe — anything the schema accepts is structurally a Spec.
-  const augmented = augmentLastUserMessage(
-    parsed.data.messages,
-    (parsed.data.currentSpec ?? null) as Spec | null,
-  );
+  const currentSpec = parsed.data.currentSpec
+    ? toSpec(parsed.data.currentSpec)
+    : null;
+  const augmented = augmentLastUserMessage(parsed.data.messages, currentSpec);
 
   try {
     const result = streamText({

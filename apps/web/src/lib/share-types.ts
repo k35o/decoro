@@ -1,21 +1,19 @@
-import type { Spec } from '@json-render/core';
 import { z } from 'zod';
+
+import { MAX_MESSAGE_CHARS, MAX_MESSAGES, specSchema } from './spec-schema.ts';
 
 /**
  * Shared Zod schemas + types for share snapshots (see ADR-013, Tier 2).
  *
- * The schemas mirror the limits applied at `/api/generate` so a snapshot
- * cannot smuggle in payloads larger than the generator itself accepts.
+ * The `spec` validator is shared with `/api/generate`; the message shape
+ * differs (the share snapshot carries the full chat-pane shape `{id, role,
+ * text}` rather than the LLM API's `{role, content}`), so the message
+ * schema lives here.
+ *
  * Stored snapshots are validated on both ingest (POST) and read (GET) — read
  * validation is defense-in-depth in case the on-disk file is tampered with
  * outside the API.
  */
-
-const MAX_MESSAGES = 50;
-const MAX_MESSAGE_CHARS = 4000;
-const MAX_SPEC_ELEMENTS = 200;
-const MAX_ELEMENT_CHILDREN = 50;
-const MAX_COMPONENT_TYPE_CHARS = 50;
 
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{12}$/;
 
@@ -36,32 +34,14 @@ export const newShareId = (): string => {
     .replaceAll('=', '');
 };
 
-const messageSchema = z.object({
+const chatMessageSchema = z.object({
   id: z.string().min(1).max(64),
   role: z.enum(['user', 'assistant']),
   text: z.string().max(MAX_MESSAGE_CHARS),
 });
 
-const elementSchema = z.object({
-  type: z.string().min(1).max(MAX_COMPONENT_TYPE_CHARS),
-  props: z.record(z.string(), z.unknown()),
-  children: z.array(z.string()).max(MAX_ELEMENT_CHILDREN),
-  visible: z.unknown().optional(),
-});
-
-const specSchema = z.object({
-  root: z.string(),
-  elements: z
-    .record(z.string(), elementSchema)
-    .refine(
-      (e) => Object.keys(e).length <= MAX_SPEC_ELEMENTS,
-      `spec exceeds max ${MAX_SPEC_ELEMENTS.toString()} elements`,
-    ),
-  state: z.unknown().optional(),
-});
-
 export const snapshotInputSchema = z.object({
-  messages: z.array(messageSchema).min(1).max(MAX_MESSAGES),
+  messages: z.array(chatMessageSchema).min(1).max(MAX_MESSAGES),
   spec: specSchema,
 });
 
@@ -73,5 +53,14 @@ export const snapshotRecordSchema = snapshotInputSchema.extend({
 
 export type SnapshotInput = z.infer<typeof snapshotInputSchema>;
 export type SnapshotRecord = z.infer<typeof snapshotRecordSchema>;
-export type SharedMessage = z.infer<typeof messageSchema>;
-export type SharedSpec = Spec;
+/**
+ * The single in-flight chat message shape. Used by:
+ * - `useDecoroChat` (in-process)
+ * - `<ChatPane>` (UI)
+ * - `<ShareView>` (read-only transcript)
+ * - snapshot bodies (POST/GET to /api/share, validated by `chatMessageSchema`)
+ *
+ * Kept here so the schema and the type stay in lockstep — `z.infer` would
+ * disagree with a hand-written type if the schema drifts.
+ */
+export type ChatMessage = z.infer<typeof chatMessageSchema>;

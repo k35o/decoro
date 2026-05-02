@@ -1,12 +1,7 @@
 import { share } from '../../../../decoro.config.ts';
+import { jsonError } from '../../../lib/api-response.ts';
 import { SnapshotExistsError, putSnapshot } from '../../../lib/share-store.ts';
 import { newShareId, snapshotInputSchema } from '../../../lib/share-types.ts';
-
-const jsonError = (status: number, message: string) =>
-  new Response(JSON.stringify({ message }), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
 
 /**
  * Per-IP rate limit. Best-effort only.
