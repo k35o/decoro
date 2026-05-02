@@ -1,35 +1,33 @@
 'use client';
 
-import { Heading, SparklesIcon, ViewIcon } from '@k8o/arte-odyssey';
+import type { Spec } from '@json-render/core';
+import { Anchor, Heading, SparklesIcon, ViewIcon } from '@k8o/arte-odyssey';
 import { useState } from 'react';
 
-import { useDecoroChat } from '../lib/use-decoro-chat.ts';
-import { type ChatMessage, ChatPane } from './chat-pane.tsx';
+import type { SnapshotRecord } from '../lib/share-types.ts';
 import { CodePanel } from './code-panel.tsx';
 import { PreviewFrame } from './preview-frame.tsx';
-import { ShareButton } from './share-button.tsx';
+
+type Props = {
+  snapshot: SnapshotRecord;
+};
 
 type OutputTab = 'preview' | 'code';
 
 /**
- * Top-level client shell for `/`. Wires the chat pane to `useDecoroChat`,
- * which posts `{ messages, currentSpec }` to /api/generate so each follow-up
- * iterates on the existing spec instead of regenerating from scratch (M8).
+ * Read-only renderer for `/share/[id]`. Mirrors the home shell's two-pane
+ * layout but drops the prompt input — viewers cannot iterate on a snapshot.
  *
- * The right pane shows Preview and Code as tabs. Both are kept mounted via
- * `hidden` so the iframe's spec / postMessage handshake survives tab switches.
+ * Tabs are rolled by hand for the same reason as `home-shell` (keep the
+ * preview iframe mounted across tab switches so its postMessage handshake
+ * survives).
  */
-export const HomeShell = () => {
-  const { messages, spec, isStreaming, error, send } = useDecoroChat({
-    api: '/api/generate',
-  });
+export const ShareView = ({ snapshot }: Props) => {
   const [tab, setTab] = useState<OutputTab>('preview');
-
-  const chatMessages: ChatMessage[] = messages.map((m) => ({
-    id: m.id,
-    role: m.role,
-    text: m.text,
-  }));
+  // Zod infers `visible` as `unknown`; the Spec contract narrows it to
+  // VisibilityCondition. The /api/generate route does the same cast — see
+  // its `augmentLastUserMessage` callsite.
+  const spec = snapshot.spec as unknown as Spec;
 
   return (
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
@@ -40,36 +38,51 @@ export const HomeShell = () => {
           </span>
           <div className="flex items-baseline gap-3">
             <Heading type="h1">Decoro</Heading>
-            <p className="text-fg-mute text-sm">
-              AI UI generation for ArteOdyssey
-            </p>
+            <p className="text-fg-mute text-sm">Shared snapshot · read-only</p>
           </div>
         </div>
-        <ShareButton
-          spec={spec}
-          messages={chatMessages}
-          isStreaming={isStreaming}
-        />
+        <Anchor href="/">Open Decoro →</Anchor>
       </header>
       <main className="flex flex-1 gap-4 overflow-hidden p-4">
         <section
-          aria-label="Chat"
+          aria-label="Conversation"
           className="bg-bg-base flex w-5/12 flex-col overflow-hidden rounded-xl shadow-sm"
         >
-          <ChatPane
-            messages={chatMessages}
-            isStreaming={isStreaming}
-            error={error}
-            onSubmit={(prompt) => {
-              void send(prompt);
-            }}
-          />
+          <div className="border-border-subtle flex items-center gap-2 border-b px-5 py-3">
+            <span className="text-primary-fg" aria-hidden="true">
+              <SparklesIcon size="sm" />
+            </span>
+            <h2 className="text-fg-base text-sm font-medium">Conversation</h2>
+          </div>
+          <ul
+            className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4"
+            aria-label="Conversation transcript"
+          >
+            {snapshot.messages.map((msg) =>
+              msg.role === 'user' ? (
+                <li key={msg.id} className="flex justify-end">
+                  <div className="bg-primary-bg-mute text-fg-base max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
+                    {msg.text}
+                  </div>
+                </li>
+              ) : msg.text === '' ? null : (
+                <li key={msg.id} className="flex justify-start">
+                  <div className="bg-bg-subtle text-fg-base max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-2 text-sm">
+                    {msg.text}
+                  </div>
+                </li>
+              ),
+            )}
+          </ul>
+          <p className="text-fg-subtle border-border-subtle border-t px-5 py-3 text-xs">
+            Captured {new Date(snapshot.createdAt).toLocaleString()}
+          </p>
         </section>
         <section
           aria-label="Output"
           className="bg-bg-base flex w-7/12 flex-col overflow-hidden rounded-xl shadow-sm"
         >
-          <OutputTabs value={tab} onChange={setTab} />
+          <ShareTabs value={tab} onChange={setTab} />
           <div className="relative flex-1 overflow-hidden">
             <div hidden={tab !== 'preview'} className="h-full">
               <PreviewFrame spec={spec} />
@@ -84,7 +97,7 @@ export const HomeShell = () => {
   );
 };
 
-const OutputTabs = ({
+const ShareTabs = ({
   value,
   onChange,
 }: {
@@ -134,10 +147,6 @@ const OutputTabs = ({
   );
 };
 
-/**
- * Inline `< />` glyph used for the Code tab — ArteOdyssey's icon set doesn't
- * ship a code/braces icon, so we draw a tiny one matching `size="sm"`.
- */
 const CodeBracketsIcon = () => (
   <svg
     aria-hidden="true"

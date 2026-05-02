@@ -55,3 +55,7 @@ settings.local.json
 
 # Design docs are kept local-only for now
 docs/
+
+# Share-snapshot store (Tier 2 sharing — see ADR-013).
+# Each file is `<id>.json` with a public conversation snapshot.
+.decoro-shares/
