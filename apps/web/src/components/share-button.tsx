@@ -17,7 +17,7 @@ const FEEDBACK_MS = 4000;
 type ShareState =
   | { kind: 'idle' }
   | { kind: 'sharing' }
-  | { kind: 'shared'; url: string }
+  | { kind: 'shared'; url: string; clipboardOk: boolean }
   | { kind: 'failed'; message: string };
 
 /**
@@ -76,13 +76,17 @@ export const ShareButton = ({ spec, messages, isStreaming }: Props) => {
         throw new Error(data?.message ?? `HTTP ${res.status.toString()}`);
       }
       const { url } = (await res.json()) as { url: string };
+      let clipboardOk = true;
       try {
         await navigator.clipboard.writeText(url);
       } catch {
         // Clipboard might be unavailable (no HTTPS, blurred document, …).
-        // The URL still surfaces inline below as a fallback.
+        // The URL still surfaces inline below as a fallback. Track the
+        // failure so the button label doesn't lie about whether the copy
+        // actually happened.
+        clipboardOk = false;
       }
-      setState({ kind: 'shared', url });
+      setState({ kind: 'shared', url, clipboardOk });
     } catch (err) {
       setState({
         kind: 'failed',
@@ -95,7 +99,9 @@ export const ShareButton = ({ spec, messages, isStreaming }: Props) => {
     state.kind === 'sharing'
       ? 'Sharing…'
       : state.kind === 'shared'
-        ? 'Link copied!'
+        ? state.clipboardOk
+          ? 'Link copied!'
+          : 'Link ready · copy below'
         : state.kind === 'failed'
           ? 'Share failed'
           : 'Share';

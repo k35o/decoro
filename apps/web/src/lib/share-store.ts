@@ -38,10 +38,39 @@ const filePathFor = (id: string): string => {
   return join(SHARES_DIR, `${id}.json`);
 };
 
+/**
+ * Sentinel error for callers (e.g. `POST /api/share`) to catch and react to
+ * an id collision by regenerating the id and retrying. Carries `code: 'EEXIST'`
+ * so callers can match Node's filesystem convention without depending on the
+ * underlying error class.
+ */
+export class SnapshotExistsError extends Error {
+  readonly code = 'EEXIST' as const;
+  constructor(id: string) {
+    super(`snapshot already exists: ${id}`);
+    this.name = 'SnapshotExistsError';
+  }
+}
+
+/**
+ * Writes the snapshot exclusively (`flag: 'wx'`) — fails if a file already
+ * exists at the same id. Snapshots are immutable per ADR-013; callers handle
+ * the (astronomically rare) collision by regenerating the id and retrying.
+ */
 export const putSnapshot = async (record: SnapshotRecord): Promise<void> => {
   await ensureDir();
   const path = filePathFor(record.id);
-  await writeFile(path, JSON.stringify(record), 'utf8');
+  try {
+    await writeFile(path, JSON.stringify(record), {
+      encoding: 'utf8',
+      flag: 'wx',
+    });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new SnapshotExistsError(record.id);
+    }
+    throw err;
+  }
 };
 
 /**

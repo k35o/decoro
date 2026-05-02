@@ -2,7 +2,7 @@
 
 import type { Spec } from '@json-render/core';
 import { Anchor, Heading, SparklesIcon, ViewIcon } from '@k8o/arte-odyssey';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { SnapshotRecord } from '../lib/share-types.ts';
 import { CodePanel } from './code-panel.tsx';
@@ -28,6 +28,17 @@ export const ShareView = ({ snapshot }: Props) => {
   // VisibilityCondition. The /api/generate route does the same cast — see
   // its `augmentLastUserMessage` callsite.
   const spec = snapshot.spec as unknown as Spec;
+  // Format the captured-at stamp on the client only. `toLocaleString()`
+  // depends on the runtime's locale + timezone; running it during SSR and
+  // again on hydration produces a mismatch warning whenever the recipient's
+  // browser disagrees with the server. Render the raw ISO string until the
+  // effect lands, then swap to the localized form.
+  const [formattedCapturedAt, setFormattedCapturedAt] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    setFormattedCapturedAt(new Date(snapshot.createdAt).toLocaleString());
+  }, [snapshot.createdAt]);
 
   return (
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
@@ -75,7 +86,10 @@ export const ShareView = ({ snapshot }: Props) => {
             )}
           </ul>
           <p className="text-fg-subtle border-border-subtle border-t px-5 py-3 text-xs">
-            Captured {new Date(snapshot.createdAt).toLocaleString()}
+            Captured{' '}
+            <time dateTime={snapshot.createdAt}>
+              {formattedCapturedAt ?? snapshot.createdAt}
+            </time>
           </p>
         </section>
         <section
