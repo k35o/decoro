@@ -38,11 +38,26 @@ const responsePreambleInstruction = [
   '- Do not emit any prose between or after the patches.',
 ].join('\n');
 
+// ArteOdyssey components do not accept `className` (the design system
+// chooses styling internally). Only the layout HTML elements (div, section,
+// header, main) accept className, and only from the curated allowlist
+// declared in their schema. Codegen also strips unknown props as
+// belt-and-braces, but reminding the model up front is cheaper than
+// repairing the spec downstream.
+const propsDisciplineInstruction = [
+  'Prop discipline:',
+  '- Set only the props each component declares in its catalog entry.',
+  '- Do NOT add `className` to ArteOdyssey components (Button, Card, FormControl, TextField, etc.). They control their own styling.',
+  '- `className` is allowed ONLY on layout HTML elements (div, section, header, main), and only with the allowlisted utility tokens shown in their schema.',
+].join('\n');
+
 const systemPrompt = [
   adapter.catalog.prompt({ mode: 'standalone' }),
   '',
   'Library design principles:',
   adapter.metadata.designPrinciples,
+  '',
+  propsDisciplineInstruction,
   '',
   responsePreambleInstruction,
 ].join('\n');
