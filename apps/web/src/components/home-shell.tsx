@@ -3,9 +3,10 @@
 import { ViewIcon } from '@k8o/arte-odyssey';
 import { useState } from 'react';
 
+import type { ChatMessage } from '../lib/chat-types.ts';
 import { useDecoroChat } from '../lib/use-decoro-chat.ts';
 import { AppHeader } from './app-header.tsx';
-import { type ChatMessage, ChatPane } from './chat-pane.tsx';
+import { ChatPane } from './chat-pane.tsx';
 import { CodePanel } from './code-panel.tsx';
 import { PreviewFrame } from './preview-frame.tsx';
 import { ShareButton } from './share-button.tsx';

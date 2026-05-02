@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
-import { MAX_MESSAGE_CHARS, MAX_MESSAGES, specSchema } from './spec-schema.ts';
+import { chatMessageSchema } from './chat-types.ts';
+import { MAX_MESSAGES, specSchema } from './spec-schema.ts';
 
 /**
- * Shared Zod schemas + types for share snapshots (see ADR-013, Tier 2).
+ * Zod schemas + types for share snapshots (see ADR-013, Tier 2).
  *
- * The `spec` validator is shared with `/api/generate`; the message shape
- * differs (the share snapshot carries the full chat-pane shape `{id, role,
- * text}` rather than the LLM API's `{role, content}`), so the message
- * schema lives here.
+ * Builds on the canonical chat / spec primitives: `chatMessageSchema` from
+ * chat-types.ts and `specSchema` from spec-schema.ts. Share-specific shape
+ * (id + createdAt + schemaVersion + messages array + spec) lives here.
  *
  * Stored snapshots are validated on both ingest (POST) and read (GET) — read
  * validation is defense-in-depth in case the on-disk file is tampered with
@@ -34,12 +34,6 @@ export const newShareId = (): string => {
     .replaceAll('=', '');
 };
 
-const chatMessageSchema = z.object({
-  id: z.string().min(1).max(64),
-  role: z.enum(['user', 'assistant']),
-  text: z.string().max(MAX_MESSAGE_CHARS),
-});
-
 export const snapshotInputSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(MAX_MESSAGES),
   spec: specSchema,
@@ -53,14 +47,3 @@ export const snapshotRecordSchema = snapshotInputSchema.extend({
 
 export type SnapshotInput = z.infer<typeof snapshotInputSchema>;
 export type SnapshotRecord = z.infer<typeof snapshotRecordSchema>;
-/**
- * The single in-flight chat message shape. Used by:
- * - `useDecoroChat` (in-process)
- * - `<ChatPane>` (UI)
- * - `<ShareView>` (read-only transcript)
- * - snapshot bodies (POST/GET to /api/share, validated by `chatMessageSchema`)
- *
- * Kept here so the schema and the type stay in lockstep — `z.infer` would
- * disagree with a hand-written type if the schema drifts.
- */
-export type ChatMessage = z.infer<typeof chatMessageSchema>;

@@ -1,10 +1,9 @@
-import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import { createModel } from '@decoro/llm-config';
 import { type Spec, buildUserPrompt } from '@json-render/core';
 import { type ModelMessage, streamText } from 'ai';
 import { z } from 'zod';
 
-import { llm } from '../../../../decoro.config.ts';
+import { adapter, llm } from '../../../../decoro.config.ts';
 import { jsonError } from '../../../lib/api-response.ts';
 import {
   MAX_MESSAGE_CHARS,
@@ -40,10 +39,10 @@ const responsePreambleInstruction = [
 ].join('\n');
 
 const systemPrompt = [
-  arteOdysseyAdapter.catalog.prompt({ mode: 'standalone' }),
+  adapter.catalog.prompt({ mode: 'standalone' }),
   '',
   'Library design principles:',
-  arteOdysseyAdapter.metadata.designPrinciples,
+  adapter.metadata.designPrinciples,
   '',
   responsePreambleInstruction,
 ].join('\n');

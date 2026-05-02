@@ -10,9 +10,7 @@ import {
 } from '@k8o/arte-odyssey';
 import { useState } from 'react';
 
-import type { ChatMessage } from '../lib/share-types.ts';
-
-export type { ChatMessage };
+import type { ChatMessage } from '../lib/chat-types.ts';
 
 type Props = {
   messages: ChatMessage[];

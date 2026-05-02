@@ -1,11 +1,11 @@
 'use client';
 
-import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
 import { JSONUIProvider, Renderer } from '@json-render/react';
 import { SparklesIcon } from '@k8o/arte-odyssey';
 import { useEffect, useState } from 'react';
 
+import { adapter } from '../../../decoro.config.ts';
 import {
   type PreviewOutboundMessage,
   isPreviewMessage,
@@ -37,8 +37,8 @@ const PreviewPage = () => {
     <div className="bg-bg-base text-fg-base min-h-dvh">
       {spec ? (
         <div className="p-6">
-          <JSONUIProvider registry={arteOdysseyAdapter.registry}>
-            <Renderer spec={spec} registry={arteOdysseyAdapter.registry} />
+          <JSONUIProvider registry={adapter.registry}>
+            <Renderer spec={spec} registry={adapter.registry} />
           </JSONUIProvider>
         </div>
       ) : (

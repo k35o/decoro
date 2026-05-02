@@ -1,3 +1,4 @@
+import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { LlmConfig } from '@decoro/llm-config';
 
 /**
@@ -39,6 +40,23 @@ export const llm: LlmConfig = {
   model: 'gemini-2.5-flash',
   apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'],
 };
+
+/**
+ * Adapter binding. Pinned here so the rest of `apps/web` consumes the
+ * adapter through the abstract `Adapter` contract — `code-panel.tsx`,
+ * `preview/page.tsx`, and `/api/generate` all import this rather than
+ * `@decoro/adapter-arte-odyssey` directly. Switching to a future
+ * `@decoro/adapter-mui` etc. is a one-line change here, no consumer churn.
+ *
+ * Per ADR-004 we deliberately do not introduce a `defineConfig({ adapter,
+ * llm })` wrapper — there's only one adapter today and one config field
+ * pattern is enough for both bindings.
+ */
+// Typed as `typeof arteOdysseyAdapter` (not the bare `Adapter` interface)
+// so the registry's component type stays narrow — `Adapter` defaults
+// `TComponent` to `unknown`, which json-render's `ComponentRegistry` would
+// then refuse. Concrete adapter exports preserve the right specialization.
+export const adapter = arteOdysseyAdapter;
 
 /**
  * Share-snapshot configuration (see ADR-013).

@@ -4,7 +4,7 @@ import type { Spec } from '@json-render/core';
 import { Button, LinkIcon } from '@k8o/arte-odyssey';
 import { useEffect, useState } from 'react';
 
-import type { ChatMessage } from './chat-pane.tsx';
+import type { ChatMessage } from '../lib/chat-types.ts';
 
 type Props = {
   spec: Spec | null;

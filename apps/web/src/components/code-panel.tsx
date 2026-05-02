@@ -1,10 +1,11 @@
 'use client';
 
-import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { Spec } from '@json-render/core';
 import { Button, CopyIcon, SparklesIcon } from '@k8o/arte-odyssey';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { codeToHtml } from 'shiki';
+
+import { adapter } from '../../decoro.config.ts';
 
 type Props = {
   spec: Spec | null;
@@ -32,7 +33,7 @@ export const CodePanel = ({ spec }: Props) => {
   const code = useMemo<CodeState>(() => {
     if (spec === null) return { kind: 'empty' };
     try {
-      const value = arteOdysseyAdapter.codeOutput.generate(spec);
+      const value = adapter.codeOutput.generate(spec);
       return value === '' ? { kind: 'empty' } : { kind: 'ok', value };
     } catch (err) {
       return {
