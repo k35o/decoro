@@ -72,20 +72,25 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
                   </div>
                 </li>
               ) : (
-                <li key={msg.id} className="text-fg-subtle pl-1 text-xs italic">
-                  rendered →
+                <li key={msg.id} className="flex justify-start">
+                  {msg.text === '' ? (
+                    isStreaming ? (
+                      <span
+                        className="text-fg-mute inline-flex items-center gap-2 px-1 py-2 text-xs"
+                        aria-live="polite"
+                      >
+                        <Spinner size="sm" />
+                        <span>Generating…</span>
+                      </span>
+                    ) : null
+                  ) : (
+                    <div className="bg-bg-subtle text-fg-base max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-2 text-sm">
+                      {msg.text}
+                    </div>
+                  )}
                 </li>
               ),
             )}
-            {isStreaming ? (
-              <li
-                className="text-fg-mute flex items-center gap-2 text-xs"
-                aria-live="polite"
-              >
-                <Spinner size="sm" />
-                <span>Generating…</span>
-              </li>
-            ) : null}
             {error ? (
               <li>
                 <Alert status="error" message={error.message} />

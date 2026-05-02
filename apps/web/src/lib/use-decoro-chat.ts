@@ -59,9 +59,19 @@ export const useDecoroChat = ({ api }: Options) => {
         role: 'user',
         text: trimmed,
       };
+      // Append the assistant placeholder up front so prose tokens streamed in
+      // via `onText` (the LLM's 1-line summary, see api/generate route) can
+      // grow it character-by-character. Previously the assistant entry was
+      // appended *after* the stream completed and always carried empty text,
+      // so the chat pane fell back to a "rendered →" marker.
+      const assistantId = crypto.randomUUID();
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, userMsg],
+        messages: [
+          ...prev.messages,
+          userMsg,
+          { id: assistantId, role: 'assistant', text: '' },
+        ],
         isStreaming: true,
         error: null,
       }));
@@ -86,9 +96,17 @@ export const useDecoroChat = ({ api }: Options) => {
             },
           }));
         },
-        onText() {
-          // The system prompt tells the model to emit only JSONL patches; any
-          // stray prose is ignored rather than surfaced in the chat pane.
+        onText(chunk) {
+          // The system prompt tells the model to emit one short prose line
+          // before the JSONL patches (see api/generate route). Append the
+          // chunk to the assistant placeholder so the chat pane reflects the
+          // model's running summary as it streams in.
+          setState((prev) => ({
+            ...prev,
+            messages: prev.messages.map((m) =>
+              m.id === assistantId ? { ...m, text: m.text + chunk } : m,
+            ),
+          }));
         },
       });
 
@@ -124,14 +142,7 @@ export const useDecoroChat = ({ api }: Options) => {
         }
         parser.flush();
 
-        setState((prev) => ({
-          ...prev,
-          messages: [
-            ...prev.messages,
-            { id: crypto.randomUUID(), role: 'assistant', text: '' },
-          ],
-          isStreaming: false,
-        }));
+        setState((prev) => ({ ...prev, isStreaming: false }));
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         const error = err instanceof Error ? err : new Error(String(err));
