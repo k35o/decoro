@@ -63,6 +63,33 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('</Card>');
   });
 
+  it('emits Text as a JSX string-literal expression with no extra import', () => {
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'h',
+      elements: {
+        h: {
+          type: 'Heading',
+          props: { type: 'h2' },
+          children: ['t'],
+        },
+        t: {
+          type: 'Text',
+          props: { content: 'サインイン & "認証"' },
+          children: [],
+        },
+      },
+    });
+    expect(tsx).toContain('<Heading type="h2">');
+    // String literal escapes JSX-significant characters via JSON.stringify.
+    expect(tsx).toContain('{"サインイン & \\"認証\\""}');
+    expect(tsx).toContain('</Heading>');
+    // `Text` is a meta-type — should NOT show up in the import line.
+    expect(tsx).not.toContain(' Text ');
+    expect(tsx).not.toContain(', Text,');
+    expect(tsx).not.toContain('{ Text,');
+    expect(tsx).not.toContain(', Text }');
+  });
+
   it('emits Icon as the named ArteOdyssey component and adds it to the import line', () => {
     const tsx = arteOdysseyAdapter.codeOutput.generate({
       root: 'btn',

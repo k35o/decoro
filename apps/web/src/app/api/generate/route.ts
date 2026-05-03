@@ -68,6 +68,18 @@ const iconUsageInstruction = [
   '- NEVER invent icon names from Material Symbols / Heroicons / Font Awesome (`help_outline`, `menu_book`, `support_agent`, etc.) — they will not resolve and will render as raw text.',
 ].join('\n');
 
+// The spec model has `children: string[]` referencing OTHER spec elements
+// by key — there is no way to nest a literal string under a parent. Without
+// a `Text` primitive the LLM defaults to empty `<div />` placeholders
+// inside Heading / Anchor / Card, leaving silent gaps in the preview.
+const textUsageInstruction = [
+  'Text content:',
+  '- Use the `Text` component (`{ "type": "Text", "props": { "content": "..." } }`) for any literal text inside another component — Heading text, Anchor labels, Card body copy, list item text, etc.',
+  '- Children are element keys, NOT raw strings — placing a string directly in `children` is invalid.',
+  '- Components with a dedicated text prop (Button.label, Alert.message, Badge.text, FormControl.label, IconButton.label) take strings via THAT prop, not via `Text` children.',
+  '- If a parent has nothing to say, omit the child entirely — do NOT insert an empty `<div />` placeholder.',
+].join('\n');
+
 // Decoro is a design tool — users want to *see* their UI, not run it. The
 // LLM's first instinct is to produce a state-bound interactive prototype
 // (e.g. a chat with `$bindEach: '/messages'` over the message list, or
@@ -95,6 +107,8 @@ const systemPrompt = [
   propsDisciplineInstruction,
   '',
   iconUsageInstruction,
+  '',
+  textUsageInstruction,
   '',
   mockupFirstInstruction,
   '',

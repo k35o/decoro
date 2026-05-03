@@ -26,6 +26,7 @@ import type {
   LayoutElementProps,
   ModalProps,
   PaginationProps,
+  TextProps,
 } from './catalog.ts';
 import { generatedRegistry } from './registry.generated.tsx';
 
@@ -134,6 +135,16 @@ const ModalRenderer = ({
 };
 
 /**
+ * Render the spec's `Text` primitive as plain text. React accepts a string
+ * as a valid child / element, so the renderer returns the content directly.
+ * Without this, the spec model (`children: string[]` referencing other
+ * elements) has no way to express raw text content, and the LLM was
+ * reaching for empty `<div />` placeholders inside Heading / Anchor / Card.
+ */
+const TextRenderer = ({ element }: ComponentRenderProps<TextProps>) =>
+  element.props.content;
+
+/**
  * Look up an ArteOdyssey icon component by name. The Catalog Zod enum
  * already constrains `name` to a known icon, so the cast is safe — but we
  * still null-check to avoid a hard crash if a stale spec carries a name
@@ -214,6 +225,7 @@ export const registry: ComponentRegistry = {
   Pagination: PaginationRenderer,
   Icon: IconRenderer,
   IconButton: IconButtonRenderer,
+  Text: TextRenderer,
   div: layoutElementRenderer('div'),
   section: layoutElementRenderer('section'),
   header: layoutElementRenderer('header'),

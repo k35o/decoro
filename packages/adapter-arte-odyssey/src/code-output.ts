@@ -13,11 +13,15 @@ import { type Formatter, pad, stripNullish } from './codegen-shared.ts';
 const ICON_NAME_SET: ReadonlySet<string> = new Set(ICON_NAMES);
 
 /**
- * Catalog meta-types whose generated TSX uses different identifiers than
- * the spec's `type`. These should never appear in the import line directly
- * — the formatter adds the real import via `extras.addImport`.
+ * Catalog meta-types that don't correspond to a single named import:
+ * - `Icon` resolves to one of 47 named icon components via `name` (the
+ *   formatter calls `extras.addImport(name)` to pick the right one).
+ * - `Text` emits inline as a JSX expression with a string literal, no
+ *   component reference at all.
+ *
+ * Keep them out of the auto-collected import list.
  */
-const META_TYPES = new Set(['Icon']);
+const META_TYPES = new Set(['Icon', 'Text']);
 
 const importPath = '@k8o/arte-odyssey';
 
@@ -164,6 +168,15 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth + 1)}onPageChange={(_page) => {}}`,
       `${pad(depth)}/>`,
     ].join('\n');
+  },
+  Text: (element, _children, depth) => {
+    const { content } = element.props as { content?: unknown };
+    const text = typeof content === 'string' ? content : '';
+    if (text === '') return '';
+    // JSX expression with a JS string literal so any character (`<`, `>`,
+    // `&`, quotes, braces) survives copy-paste into a real codebase.
+    // Same approach as the Button label formatter.
+    return `${pad(depth)}{${JSON.stringify(text)}}`;
   },
   Icon: (element, _children, depth, extras) => {
     const { name, size } = element.props as { name?: unknown; size?: unknown };

@@ -134,6 +134,26 @@ const iconButtonProps = z.object({
 });
 
 /**
+ * Catalog primitive for raw text content. The json-render spec model has
+ * `children: string[]` referring to OTHER spec elements by key — there is
+ * no way to nest a literal string under a parent. Without a `Text`
+ * primitive the LLM either fakes it with an empty `<div />` placeholder
+ * (visible in dogfood as silent gaps inside Heading / Card body / Anchor)
+ * or skips the content entirely.
+ *
+ * Codegen emits `Text` as a JSX expression with a JS string literal —
+ * `{"サインイン"}` — so JSX-significant characters (`<`, `>`, `&`, quotes)
+ * survive the round-trip into the user's codebase.
+ */
+const textProps = z.object({
+  content: z
+    .string()
+    .describe(
+      'The text to render at this position. Use this whenever you need raw text content inside another component (Heading, Anchor, Card body, etc.) — children are otherwise references to other spec elements.',
+    ),
+});
+
+/**
  * Layout HTML element shape (per ADR-012). The only prop is `className`,
  * constrained at the Zod layer to a curated allowlist so the LLM cannot
  * break out of the design system.
@@ -210,6 +230,12 @@ export const catalog = defineCatalog(schema, {
       description:
         'ArteOdyssey icon. Set `name` to one of the listed icons — these are the ONLY available icons. NEVER use Material Symbols / Heroicons / Font Awesome names (`help_outline`, `menu_book`, etc.); they will not resolve and render as raw text.',
     },
+    Text: {
+      props: textProps,
+      slots: [],
+      description:
+        'Raw text content. Use this whenever you need a literal string inside another component (Heading title, Anchor label, Card body copy, list item text, etc.). Without `Text`, children would just be element keys — there is no other way to express text content.',
+    },
     IconButton: {
       props: iconButtonProps,
       slots: ['default'],
@@ -262,3 +288,4 @@ export type ModalProps = z.infer<typeof modalProps>;
 export type PaginationProps = z.infer<typeof paginationProps>;
 export type IconProps = z.infer<typeof iconProps>;
 export type IconButtonProps = z.infer<typeof iconButtonProps>;
+export type TextProps = z.infer<typeof textProps>;
