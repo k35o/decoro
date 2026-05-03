@@ -54,6 +54,86 @@ const paginationProps = z.object({
 });
 
 /**
+ * The complete set of icon components ArteOdyssey ships from
+ * `@k8o/arte-odyssey`. The catalog uses this enum so the LLM can only
+ * pick names that actually resolve to a real export — without it the
+ * model defaults to Material Symbols / Heroicons names (`help_outline`,
+ * `menu_book`, etc.) because that's the dominant chatbot-UI training
+ * data, and those render as raw text in the preview.
+ *
+ * Source of truth: ArteOdyssey's icons module
+ * (`packages/arte-odyssey/src/components/icons/lucide.tsx`). When a new
+ * icon ships there, append the name here and the registry / codegen
+ * picks it up automatically.
+ */
+export const ICON_NAMES = [
+  'AIIcon',
+  'AccessibilityIcon',
+  'AlertIcon',
+  'AtomIcon',
+  'BadIcon',
+  'BlogIcon',
+  'BoringIcon',
+  'CheckIcon',
+  'ChevronIcon',
+  'CloseIcon',
+  'ColorContrastIcon',
+  'ColorInfoIcon',
+  'CopyIcon',
+  'DarkModeIcon',
+  'DifficultIcon',
+  'EasyIcon',
+  'ExternalLinkIcon',
+  'FormIcon',
+  'GoodIcon',
+  'HistoryIcon',
+  'InformativeIcon',
+  'InterestingIcon',
+  'LightModeIcon',
+  'LinkIcon',
+  'ListIcon',
+  'LocationIcon',
+  'MailIcon',
+  'MinusIcon',
+  'MixedColorIcon',
+  'NavigationMenuIcon',
+  'NewsIcon',
+  'PaletteIcon',
+  'PlusIcon',
+  'PrepareIcon',
+  'PublishDateIcon',
+  'RSSIcon',
+  'SendIcon',
+  'ShallowIcon',
+  'ShieldCheckIcon',
+  'SlideIcon',
+  'SparklesIcon',
+  'SubscribeIcon',
+  'TableIcon',
+  'TagIcon',
+  'UpdateDateIcon',
+  'ViewIcon',
+  'ViewOffIcon',
+] as const;
+
+export type IconName = (typeof ICON_NAMES)[number];
+
+const iconProps = z.object({
+  name: z.enum(ICON_NAMES),
+  size: z.enum(['sm', 'md', 'lg']).nullable(),
+});
+
+const iconButtonProps = z.object({
+  label: z
+    .string()
+    .describe(
+      'Tooltip / aria-label. Required — IconButton has no visible text, so the label is the only signal of intent for screen readers and on hover.',
+    ),
+  size: z.enum(['sm', 'md', 'lg']).nullable(),
+  bg: z.enum(['transparent', 'base', 'primary', 'secondary']).nullable(),
+});
+
+/**
  * Layout HTML element shape (per ADR-012). The only prop is `className`,
  * constrained at the Zod layer to a curated allowlist so the LLM cannot
  * break out of the design system.
@@ -124,6 +204,18 @@ export const catalog = defineCatalog(schema, {
       description:
         'Pagination control with prev / next buttons. `totalPages` and `currentPage` are required (1-based). `prevLabel` / `nextLabel` default to Japanese labels in ArteOdyssey; override for English UIs.',
     },
+    Icon: {
+      props: iconProps,
+      slots: [],
+      description:
+        'ArteOdyssey icon. Set `name` to one of the listed icons — these are the ONLY available icons. NEVER use Material Symbols / Heroicons / Font Awesome names (`help_outline`, `menu_book`, etc.); they will not resolve and render as raw text.',
+    },
+    IconButton: {
+      props: iconButtonProps,
+      slots: ['default'],
+      description:
+        'Icon-only button with a tooltip / aria-label. Place exactly one `<Icon name="..." />` child for the visible glyph; `label` is the tooltip text and accessible name. The catalog `IconButton` from the auto-generated set above is overridden here — only this shape is correct.',
+    },
     div: {
       props: layoutElementProps,
       slots: ['default'],
@@ -168,3 +260,5 @@ export type FormControlProps = z.infer<typeof formControlProps>;
 export type DrawerProps = z.infer<typeof drawerProps>;
 export type ModalProps = z.infer<typeof modalProps>;
 export type PaginationProps = z.infer<typeof paginationProps>;
+export type IconProps = z.infer<typeof iconProps>;
+export type IconButtonProps = z.infer<typeof iconButtonProps>;

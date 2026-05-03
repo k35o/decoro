@@ -9,10 +9,21 @@ export const stripNullish = (props: Record<string, unknown>) =>
     Object.entries(props).filter(([, v]) => v !== null && v !== undefined),
   );
 
+/**
+ * `extras.addImport(name)` lets a formatter pull in an additional named
+ * export from `@k8o/arte-odyssey` beyond the element's own type. Used by
+ * the Icon formatter to emit `<HistoryIcon />` (the icon component) while
+ * the catalog type stays as the meta `Icon`.
+ */
+export type FormatterExtras = {
+  addImport: (name: string) => void;
+};
+
 export type Formatter = (
   element: UIElement,
   renderedChildren: string[],
   depth: number,
+  extras: FormatterExtras,
 ) => string;
 
 /**
@@ -23,7 +34,7 @@ export type Formatter = (
  */
 export const passthroughFormatter =
   (tag: string): Formatter =>
-  (element, renderedChildren, depth) => {
+  (element, renderedChildren, depth, _extras) => {
     const propsAttrs = serializeProps(stripNullish(element.props), {
       quotes: 'double',
     });

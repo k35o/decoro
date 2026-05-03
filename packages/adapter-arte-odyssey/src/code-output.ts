@@ -3,12 +3,21 @@ import { serializeProps } from '@json-render/codegen';
 import type { Spec, UIElement } from '@json-render/core';
 import type { z } from 'zod';
 
-import { catalog } from './catalog.ts';
+import { ICON_NAMES, catalog } from './catalog.ts';
 import {
   GENERATED_IMPORT_TAGS,
   generatedFormatters,
 } from './code-output.generated.ts';
 import { type Formatter, pad, stripNullish } from './codegen-shared.ts';
+
+const ICON_NAME_SET: ReadonlySet<string> = new Set(ICON_NAMES);
+
+/**
+ * Catalog meta-types whose generated TSX uses different identifiers than
+ * the spec's `type`. These should never appear in the import line directly
+ * — the formatter adds the real import via `extras.addImport`.
+ */
+const META_TYPES = new Set(['Icon']);
 
 const importPath = '@k8o/arte-odyssey';
 
@@ -156,6 +165,41 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}/>`,
     ].join('\n');
   },
+  Icon: (element, _children, depth, extras) => {
+    const { name, size } = element.props as { name?: unknown; size?: unknown };
+    if (typeof name !== 'string' || !ICON_NAME_SET.has(name)) {
+      // Defensive: sanitizeProps should reject this, but if a stale spec
+      // slips through, render nothing rather than emit a bad import.
+      return '';
+    }
+    extras.addImport(name);
+    const sizeAttr =
+      typeof size === 'string' && size.length > 0 ? ` size="${size}"` : '';
+    return `${pad(depth)}<${name}${sizeAttr} />`;
+  },
+  IconButton: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    if (renderedChildren.length === 0) {
+      return [
+        `${pad(depth)}<IconButton`,
+        `${pad(depth + 1)}${propsAttrs}`,
+        `${pad(depth + 1)}// TODO: wire onAction to your handler`,
+        `${pad(depth + 1)}onAction={() => {}}`,
+        `${pad(depth)}/>`,
+      ].join('\n');
+    }
+    return [
+      `${pad(depth)}<IconButton`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onAction to your handler`,
+      `${pad(depth + 1)}onAction={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</IconButton>`,
+    ].join('\n');
+  },
   div: layoutElementFormatter('div'),
   section: layoutElementFormatter('section'),
   header: layoutElementFormatter('header'),
@@ -214,7 +258,7 @@ const renderElement = (
       `adapter-arte-odyssey codegen: missing formatter for "${element.type}". Add an entry to formatters in code-output.ts.`,
     );
   }
-  usedTypes.add(element.type);
+  if (!META_TYPES.has(element.type)) usedTypes.add(element.type);
   visiting.add(key);
   const children = (element.children ?? [])
     .map((childKey) =>
@@ -226,7 +270,11 @@ const renderElement = (
     ...element,
     props: sanitizeProps(element.type, element.props),
   };
-  return formatter(sanitized, children, depth);
+  return formatter(sanitized, children, depth, {
+    addImport: (name) => {
+      usedTypes.add(name);
+    },
+  });
 };
 
 const generate = (spec: Spec): string => {

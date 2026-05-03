@@ -63,6 +63,33 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('</Card>');
   });
 
+  it('emits Icon as the named ArteOdyssey component and adds it to the import line', () => {
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'btn',
+      elements: {
+        btn: {
+          type: 'IconButton',
+          props: { label: 'History', size: null, bg: null },
+          children: ['ic'],
+        },
+        ic: {
+          type: 'Icon',
+          props: { name: 'HistoryIcon', size: 'sm' },
+          children: [],
+        },
+      },
+    });
+    // Import line lists the actual icon component, not the meta `Icon` type.
+    expect(tsx).toContain(
+      "import { HistoryIcon, IconButton } from '@k8o/arte-odyssey';",
+    );
+    expect(tsx).not.toContain(', Icon,');
+    expect(tsx).not.toContain(', Icon }');
+    expect(tsx).not.toContain('{ Icon,');
+    // Body emits the icon component directly inside the IconButton.
+    expect(tsx).toContain('<HistoryIcon size="sm" />');
+  });
+
   it('strips props the catalog schema does not declare (e.g. className on Card)', () => {
     // Regression: the LLM occasionally hallucinates `className` on
     // ArteOdyssey components like Card / Button that don't accept it,

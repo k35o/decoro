@@ -55,6 +55,19 @@ const propsDisciplineInstruction = [
   '- `className` is allowed ONLY on layout HTML elements (div, section, header, main), and only with the allowlisted utility tokens shown in their schema.',
 ].join('\n');
 
+// Icons matter — chatbot / dashboard / nav UIs lean heavily on them and the
+// LLM defaults to Material Symbols / Heroicons names because that's the
+// dominant training data. Those names do not resolve in ArteOdyssey and
+// render as raw text in the preview. The `Icon` catalog entry already
+// constrains `name` to a Zod enum of valid ArteOdyssey icons; this
+// instruction makes the constraint visible up front.
+const iconUsageInstruction = [
+  'Icons:',
+  '- Use the `Icon` component with its `name` prop set to one of the names in the catalog enum (e.g. `<Icon name="HistoryIcon" />`).',
+  '- For icon-only actions, use `IconButton` with one `Icon` child: `<IconButton label="History"><Icon name="HistoryIcon" /></IconButton>`.',
+  '- NEVER invent icon names from Material Symbols / Heroicons / Font Awesome (`help_outline`, `menu_book`, `support_agent`, etc.) — they will not resolve and will render as raw text.',
+].join('\n');
+
 // Decoro is a design tool — users want to *see* their UI, not run it. The
 // LLM's first instinct is to produce a state-bound interactive prototype
 // (e.g. a chat with `$bindEach: '/messages'` over the message list, or
@@ -80,6 +93,8 @@ const systemPrompt = [
   adapter.metadata.designPrinciples,
   '',
   propsDisciplineInstruction,
+  '',
+  iconUsageInstruction,
   '',
   mockupFirstInstruction,
   '',
