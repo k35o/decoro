@@ -32,10 +32,14 @@ const requestSchema = z.object({
 // `createMixedStreamParser` already distinguishes JSONL patch lines from
 // prose, so the extra line lands in `onText` without disturbing patches.
 const responsePreambleInstruction = [
-  'Response format:',
-  '- First, output exactly ONE short sentence (≤ 15 words) describing what you are building or changing in this turn. Plain prose, no JSON. End with a newline.',
-  '- Then emit the JSONL patch lines as instructed above.',
-  '- Do not emit any prose between or after the patches.',
+  'Response format (STRICT — the chat UI parses prose vs JSON by line):',
+  '- Line 1: exactly ONE short sentence (≤ 15 words) describing what you are building or changing in this turn. Plain prose, no JSON, no leading whitespace.',
+  '- Line 1 MUST end with a literal newline character before any JSON appears. Do not place JSON on the same line as the sentence.',
+  '- Lines 2+: JSONL patch lines, one complete JSON object per line. No prose between or after the patches.',
+  '- Example shape:',
+  '    Adding a primary submit button.\\n',
+  '    {"op":"add","path":"/elements/btn","value":{"type":"Button","props":{"label":"Save"},"children":[]}}\\n',
+  '    {"op":"replace","path":"/root","value":"btn"}\\n',
 ].join('\n');
 
 // ArteOdyssey components do not accept `className` (the design system
@@ -51,6 +55,24 @@ const propsDisciplineInstruction = [
   '- `className` is allowed ONLY on layout HTML elements (div, section, header, main), and only with the allowlisted utility tokens shown in their schema.',
 ].join('\n');
 
+// Decoro is a design tool — users want to *see* their UI, not run it. The
+// LLM's first instinct is to produce a state-bound interactive prototype
+// (e.g. a chat with `$bindEach: '/messages'` over the message list, or
+// `$cond` for sender-side bubble styling). With state empty, the preview
+// renders nothing — the user complains "the UI hasn't changed", because
+// it literally hasn't: the template is correct, the data is missing.
+//
+// Default to mockup-first generation. The user can opt into interactive
+// behavior by asking explicitly.
+const mockupFirstInstruction = [
+  'Mockup-first generation:',
+  '- Decoro is a design tool. Users want to SEE the UI populated, not wire up state.',
+  '- Prefer STATIC content baked directly into the spec. Render 2–4 example items inline for chat / list / table / feed UIs so the preview is populated the moment generation finishes.',
+  '- AVOID `$bindEach`, `$bindState`, `$cond`, `$item`, and action bindings (`pushState`, etc.) by default. They produce templates that render empty without state initialization.',
+  '- For form UIs, leave inputs empty (the user fills them); for display UIs, show concrete example values directly in `props`.',
+  '- Only use state bindings / actions when the user EXPLICITLY asks for an interactive prototype.',
+].join('\n');
+
 const systemPrompt = [
   adapter.catalog.prompt({ mode: 'standalone' }),
   '',
@@ -58,6 +80,8 @@ const systemPrompt = [
   adapter.metadata.designPrinciples,
   '',
   propsDisciplineInstruction,
+  '',
+  mockupFirstInstruction,
   '',
   responsePreambleInstruction,
 ].join('\n');
