@@ -4,6 +4,13 @@ import type { Catalog, Spec } from '@json-render/core';
  * Free-form description of the target component library, surfaced in the UI
  * and threaded into the generation prompt.
  *
+ * - `name`: package identifier (e.g. `'@k8o/arte-odyssey'`). Stable id;
+ *   not user-facing.
+ * - `displayName`: short proper-noun label shown in the Decoro UI (header
+ *   tagline, empty-state copy, etc.). Use the human-readable brand name
+ *   ("ArteOdyssey", "Material UI", "Chakra UI") rather than the package
+ *   id.
+ * - `version`: the library version this adapter targets.
  * - `designPrinciples`: high-level philosophy ("prefer semantic components",
  *   "use primary color for the main CTA", etc.). Read by the operator
  *   building intuition for the library and by the LLM as background
@@ -18,6 +25,7 @@ import type { Catalog, Spec } from '@json-render/core';
  */
 export type AdapterMetadata = {
   name: string;
+  displayName: string;
   version: string;
   designPrinciples: string;
   promptGuidance?: string;

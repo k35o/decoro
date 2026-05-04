@@ -10,6 +10,7 @@ import {
 } from '@k8o/arte-odyssey';
 import { useState } from 'react';
 
+import { adapter } from '../../decoro.config.ts';
 import type { ChatMessage } from '../lib/chat-types.ts';
 
 type Props = {
@@ -137,8 +138,9 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
 const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
   <div className="flex h-full flex-col gap-4">
     <p className="text-fg-mute text-sm">
-      Describe a UI in plain language. Decoro turns it into ArteOdyssey
-      components — preview live, copy as TSX. Try one of these to start:
+      Describe a UI in plain language. Decoro turns it into{' '}
+      {adapter.metadata.displayName} components — preview live, copy as TSX. Try
+      one of these to start:
     </p>
     <ul className="grid gap-2">
       {EXAMPLE_PROMPTS.map((example) => (

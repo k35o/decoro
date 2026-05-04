@@ -50,8 +50,8 @@ const PreviewPage = () => {
             Your generated UI will appear here
           </p>
           <p className="text-fg-mute max-w-md text-sm">
-            Describe a screen on the left — Decoro renders it live with
-            ArteOdyssey components.
+            Describe a screen on the left — Decoro renders it live with{' '}
+            {adapter.metadata.displayName} components.
           </p>
         </div>
       )}

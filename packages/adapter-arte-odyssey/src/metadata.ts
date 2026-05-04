@@ -32,6 +32,7 @@ const promptGuidance = [
 
 export const metadata: AdapterMetadata = {
   name: '@k8o/arte-odyssey',
+  displayName: 'ArteOdyssey',
   version: '7.0.1',
   designPrinciples: [
     'ArteOdyssey is a React + TypeScript + Tailwind CSS 4 design system.',

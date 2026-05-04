@@ -107,7 +107,7 @@ export const CodePanel = ({ spec }: Props) => {
         </p>
         <p className="text-fg-mute max-w-md text-sm">
           Describe a screen on the left — Decoro renders it live and shows the
-          matching ArteOdyssey TSX you can copy.
+          matching {adapter.metadata.displayName} TSX you can copy.
         </p>
       </div>
     );

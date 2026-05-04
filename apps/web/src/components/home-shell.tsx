@@ -31,7 +31,17 @@ const OUTPUT_TABS: ReadonlyArray<TabItem<OutputTab>> = [
  * The right pane shows Preview and Code as tabs. Both are kept mounted via
  * `hidden` so the iframe's spec / postMessage handshake survives tab switches.
  */
-export const HomeShell = () => {
+type Props = {
+  /**
+   * Header tagline. Built by the server-side page from
+   * `adapter.metadata.displayName` so this client component doesn't need
+   * to import the adapter binding (which would push it over the
+   * max-dependencies lint).
+   */
+  tagline: string;
+};
+
+export const HomeShell = ({ tagline }: Props) => {
   const { messages, spec, isStreaming, error, send } = useDecoroChat({
     api: '/api/generate',
   });
@@ -46,7 +56,7 @@ export const HomeShell = () => {
   return (
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
       <AppHeader
-        tagline="AI UI generation for ArteOdyssey"
+        tagline={tagline}
         rightSlot={
           <ShareButton
             spec={spec}
