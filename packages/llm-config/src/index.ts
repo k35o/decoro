@@ -10,6 +10,8 @@ import { createGateway } from '@ai-sdk/gateway';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 
+import { createSubprocessClaude } from './subprocess-claude.ts';
+
 /**
  * LLM configuration consumed by `createModel`. The shape is a discriminated
  * union so adding `provider: 'openai'` later only adds branches — existing
@@ -24,11 +26,17 @@ import type { LanguageModel } from 'ai';
  *     supported provider (model strings look like `anthropic/...`,
  *     `google/...`, `openai/...`). Vercel ships a free monthly credit, so
  *     this is usually the lowest-friction path.
+ *   - `subprocess-claude` shells out to the locally installed `claude` CLI
+ *     and adapts its `--print --output-format stream-json` output. Lets
+ *     you monkey-test against your Claude subscription with no per-token
+ *     API charges. Process spawn overhead (~1.5s/turn) makes this unfit
+ *     for tests / CI; use the API-backed providers there.
  */
 export type LlmConfig =
   | { provider: 'anthropic'; model: string; apiKey?: string }
   | { provider: 'google'; model: string; apiKey?: string }
-  | { provider: 'gateway'; model: string; apiKey?: string };
+  | { provider: 'gateway'; model: string; apiKey?: string }
+  | { provider: 'subprocess-claude'; model: string; command?: string };
 
 /**
  * Resolve a config into an AI SDK model instance. Server-side only — never
@@ -48,6 +56,9 @@ export const createModel = (config: LlmConfig): LanguageModel => {
     case 'gateway': {
       const gateway = createGateway({ apiKey: config.apiKey });
       return gateway(config.model);
+    }
+    case 'subprocess-claude': {
+      return createSubprocessClaude(config.model, { command: config.command });
     }
     default: {
       // Exhaustiveness guard. Adding a new provider must also add a case.

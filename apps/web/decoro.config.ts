@@ -30,15 +30,29 @@ import type { LlmConfig } from '@decoro/llm-config';
  *   { provider: 'google', model: 'gemini-2.5-flash',
  *     apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'] }
  *
+ * Local Claude CLI (subscription-backed monkey testing — no API key):
+ *   { provider: 'subprocess-claude', model: 'sonnet' }
+ * Spawns the locally installed `claude` binary per request and adapts its
+ * `--print --output-format stream-json` output. Uses whatever account
+ * `claude` is logged into. Process spawn adds ~1.5s/turn so this is for
+ * manual dogfood only — keep an API-backed provider for tests / CI.
+ *
+ * IMPORTANT — subscription terms: this provider consumes the operator's
+ * personal Claude.ai subscription quota (5-hour rate limit). It is OK to
+ * use locally for self-driven dogfood, but DO NOT ship a deployment
+ * pointed at this provider — exposing your subscription as a backend for
+ * other users would violate Anthropic's ToS (effectively reselling
+ * Claude). Production / multi-user deployments must use an API-backed
+ * provider (`gateway`, `anthropic`, `google`).
+ *
  * Adapter selection lives elsewhere for now — apps/web pins
  * `@decoro/adapter-arte-odyssey` directly. A `defineConfig` helper that
  * bundles adapter + LLM together can ship once we have a second adapter to
  * motivate the abstraction (per ADR-004).
  */
 export const llm: LlmConfig = {
-  provider: 'gateway',
-  model: 'anthropic/claude-sonnet-4-6',
-  apiKey: process.env['AI_GATEWAY_API_KEY'],
+  provider: 'subprocess-claude',
+  model: 'sonnet',
 };
 
 /**
