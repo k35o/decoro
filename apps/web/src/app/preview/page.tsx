@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react';
 
 import { adapter } from '../../../decoro.config.ts';
 import {
-  type PreviewOutboundMessage,
+  PREVIEW_CHANNEL,
+  type PreviewReadyMessage,
   isPreviewMessage,
 } from '../../lib/preview-message.ts';
 
@@ -15,21 +16,26 @@ const PreviewPage = () => {
   const [spec, setSpec] = useState<Spec | null>(null);
 
   useEffect(() => {
+    const channel = new BroadcastChannel(PREVIEW_CHANNEL);
     const handler = (event: MessageEvent) => {
-      // Origin check alone lets any same-origin window impersonate the
-      // parent. Pin acceptance to the actual parent Window.
-      if (event.source !== window.parent) return;
-      if (event.origin !== window.location.origin) return;
       if (!isPreviewMessage(event.data)) return;
       if (event.data.type === 'decoro:spec') setSpec(event.data.spec);
     };
-    window.addEventListener('message', handler);
+    channel.addEventListener('message', handler);
 
-    const ready: PreviewOutboundMessage = { type: 'decoro:ready' };
-    window.parent.postMessage(ready, window.location.origin);
+    // Ask the publisher (the main app) to (re-)broadcast the current spec.
+    // Used both on first mount of the embedded iframe and on first mount
+    // of any popped-out preview window — neither should have to wait for
+    // the next user action to populate.
+    const ready: PreviewReadyMessage = { type: 'decoro:ready' };
+    // BroadcastChannel.postMessage takes only the message; the lint
+    // rule's targetOrigin requirement applies to window.postMessage.
+    // oxlint-disable-next-line eslint-plugin-unicorn(require-post-message-target-origin)
+    channel.postMessage(ready);
 
     return () => {
-      window.removeEventListener('message', handler);
+      channel.removeEventListener('message', handler);
+      channel.close();
     };
   }, []);
 
