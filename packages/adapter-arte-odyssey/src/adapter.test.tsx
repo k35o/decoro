@@ -63,6 +63,84 @@ describe('adapter-arte-odyssey', () => {
     expect(tsx).toContain('</Card>');
   });
 
+  it('emits Text as a JSX string-literal expression with no extra import', () => {
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'h',
+      elements: {
+        h: {
+          type: 'Heading',
+          props: { type: 'h2' },
+          children: ['t'],
+        },
+        t: {
+          type: 'Text',
+          props: { content: 'サインイン & "認証"' },
+          children: [],
+        },
+      },
+    });
+    expect(tsx).toContain('<Heading type="h2">');
+    // String literal escapes JSX-significant characters via JSON.stringify.
+    expect(tsx).toContain('{"サインイン & \\"認証\\""}');
+    expect(tsx).toContain('</Heading>');
+    // `Text` is a meta-type — should NOT show up in the import line.
+    expect(tsx).not.toContain(' Text ');
+    expect(tsx).not.toContain(', Text,');
+    expect(tsx).not.toContain('{ Text,');
+    expect(tsx).not.toContain(', Text }');
+  });
+
+  it('emits Icon as the named ArteOdyssey component and adds it to the import line', () => {
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'btn',
+      elements: {
+        btn: {
+          type: 'IconButton',
+          props: { label: 'History', size: null, bg: null },
+          children: ['ic'],
+        },
+        ic: {
+          type: 'Icon',
+          props: { name: 'HistoryIcon', size: 'sm' },
+          children: [],
+        },
+      },
+    });
+    // Import line lists the actual icon component, not the meta `Icon` type.
+    expect(tsx).toContain(
+      "import { HistoryIcon, IconButton } from '@k8o/arte-odyssey';",
+    );
+    expect(tsx).not.toContain(', Icon,');
+    expect(tsx).not.toContain(', Icon }');
+    expect(tsx).not.toContain('{ Icon,');
+    // Body emits the icon component directly inside the IconButton.
+    expect(tsx).toContain('<HistoryIcon size="sm" />');
+  });
+
+  it('strips props the catalog schema does not declare (e.g. className on Card)', () => {
+    // Regression: the LLM occasionally hallucinates `className` on
+    // ArteOdyssey components like Card / Button that don't accept it,
+    // producing TSX that fails to compile when pasted into a real codebase.
+    // Codegen runs every element's props through its catalog schema before
+    // serialising; Zod's default safeParse drops unknown keys.
+    const tsx = arteOdysseyAdapter.codeOutput.generate({
+      root: 'card-1',
+      elements: {
+        'card-1': {
+          type: 'Card',
+          props: {
+            width: 'fit',
+            appearance: 'shadow',
+            className: 'p-6 max-w-sm mx-auto my-12',
+          },
+          children: [],
+        },
+      },
+    });
+    expect(tsx).not.toContain('className=');
+    expect(tsx).toContain('<Card width="fit" appearance="shadow" />');
+  });
+
   it('throws on a spec containing an unknown component type', () => {
     expect(() =>
       arteOdysseyAdapter.codeOutput.generate({

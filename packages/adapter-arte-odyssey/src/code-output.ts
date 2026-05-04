@@ -1,12 +1,27 @@
 import type { AdapterCodeOutput } from '@decoro/adapter-spec';
 import { serializeProps } from '@json-render/codegen';
-import type { Spec } from '@json-render/core';
+import type { Spec, UIElement } from '@json-render/core';
+import type { z } from 'zod';
 
+import { ICON_NAMES, catalog } from './catalog.ts';
 import {
   GENERATED_IMPORT_TAGS,
   generatedFormatters,
 } from './code-output.generated.ts';
 import { type Formatter, pad, stripNullish } from './codegen-shared.ts';
+
+const ICON_NAME_SET: ReadonlySet<string> = new Set(ICON_NAMES);
+
+/**
+ * Catalog meta-types that don't correspond to a single named import:
+ * - `Icon` resolves to one of 47 named icon components via `name` (the
+ *   formatter calls `extras.addImport(name)` to pick the right one).
+ * - `Text` emits inline as a JSX expression with a string literal, no
+ *   component reference at all.
+ *
+ * Keep them out of the auto-collected import list.
+ */
+const META_TYPES = new Set(['Icon', 'Text']);
 
 const importPath = '@k8o/arte-odyssey';
 
@@ -154,6 +169,50 @@ const formatters: Record<string, Formatter> = {
       `${pad(depth)}/>`,
     ].join('\n');
   },
+  Text: (element, _children, depth) => {
+    const { content } = element.props as { content?: unknown };
+    const text = typeof content === 'string' ? content : '';
+    if (text === '') return '';
+    // JSX expression with a JS string literal so any character (`<`, `>`,
+    // `&`, quotes, braces) survives copy-paste into a real codebase.
+    // Same approach as the Button label formatter.
+    return `${pad(depth)}{${JSON.stringify(text)}}`;
+  },
+  Icon: (element, _children, depth, extras) => {
+    const { name, size } = element.props as { name?: unknown; size?: unknown };
+    if (typeof name !== 'string' || !ICON_NAME_SET.has(name)) {
+      // Defensive: sanitizeProps should reject this, but if a stale spec
+      // slips through, render nothing rather than emit a bad import.
+      return '';
+    }
+    extras.addImport(name);
+    const sizeAttr =
+      typeof size === 'string' && size.length > 0 ? ` size="${size}"` : '';
+    return `${pad(depth)}<${name}${sizeAttr} />`;
+  },
+  IconButton: (element, renderedChildren, depth) => {
+    const propsAttrs = serializeProps(stripNullish(element.props), {
+      quotes: 'double',
+    });
+    if (renderedChildren.length === 0) {
+      return [
+        `${pad(depth)}<IconButton`,
+        `${pad(depth + 1)}${propsAttrs}`,
+        `${pad(depth + 1)}// TODO: wire onAction to your handler`,
+        `${pad(depth + 1)}onAction={() => {}}`,
+        `${pad(depth)}/>`,
+      ].join('\n');
+    }
+    return [
+      `${pad(depth)}<IconButton`,
+      `${pad(depth + 1)}${propsAttrs}`,
+      `${pad(depth + 1)}// TODO: wire onAction to your handler`,
+      `${pad(depth + 1)}onAction={() => {}}`,
+      `${pad(depth)}>`,
+      ...renderedChildren,
+      `${pad(depth)}</IconButton>`,
+    ].join('\n');
+  },
   div: layoutElementFormatter('div'),
   section: layoutElementFormatter('section'),
   header: layoutElementFormatter('header'),
@@ -161,6 +220,31 @@ const formatters: Record<string, Formatter> = {
 };
 
 const MAX_DEPTH = 64;
+
+/**
+ * Strip props that the catalog's Zod schema for this component does not
+ * declare. Zod `safeParse` defaults to dropping unknown keys, so a
+ * successful parse returns the same shape minus anything the LLM hallucinated
+ * (e.g. `className` on `<Card>`, which ArteOdyssey's Card does not accept —
+ * pasting that into a real codebase fails to compile).
+ *
+ * Falls back to the original props on parse failure so a single bad value
+ * doesn't break codegen for the rest of the spec — the user still gets
+ * something to work with even if a prop is malformed.
+ */
+const catalogComponents = (
+  catalog.data as { components: Record<string, { props: z.ZodType }> }
+).components;
+
+const sanitizeProps = (
+  type: string,
+  props: Record<string, unknown>,
+): Record<string, unknown> => {
+  const schema = catalogComponents[type]?.props;
+  if (!schema) return props;
+  const result = schema.safeParse(props);
+  return result.success ? (result.data as Record<string, unknown>) : props;
+};
 
 const renderElement = (
   spec: Spec,
@@ -187,7 +271,7 @@ const renderElement = (
       `adapter-arte-odyssey codegen: missing formatter for "${element.type}". Add an entry to formatters in code-output.ts.`,
     );
   }
-  usedTypes.add(element.type);
+  if (!META_TYPES.has(element.type)) usedTypes.add(element.type);
   visiting.add(key);
   const children = (element.children ?? [])
     .map((childKey) =>
@@ -195,7 +279,15 @@ const renderElement = (
     )
     .filter((s) => s !== '');
   visiting.delete(key);
-  return formatter(element, children, depth);
+  const sanitized: UIElement = {
+    ...element,
+    props: sanitizeProps(element.type, element.props),
+  };
+  return formatter(sanitized, children, depth, {
+    addImport: (name) => {
+      usedTypes.add(name);
+    },
+  });
 };
 
 const generate = (spec: Spec): string => {

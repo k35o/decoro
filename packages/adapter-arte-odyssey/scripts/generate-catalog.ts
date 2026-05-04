@@ -99,6 +99,12 @@ const HAND_OVERRIDDEN_COMPONENTS = new Set([
   'Drawer',
   'Modal',
   'Pagination',
+  // IconButton's auto-generated entry hallucinated `startIcon` / `endIcon`
+  // string props that don't exist on the real component (its API takes a
+  // `label` for the tooltip and the icon as children). Skipped here so the
+  // hand-written entry in catalog.ts wins; see also the hand-written `Icon`
+  // entry which gives the LLM the constrained name enum.
+  'IconButton',
 ]);
 
 type CliFlags = { from: string };

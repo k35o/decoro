@@ -2,16 +2,18 @@ import type {
   ComponentRegistry,
   ComponentRenderProps,
 } from '@json-render/react';
+import * as arteOdyssey from '@k8o/arte-odyssey';
 import {
   Alert,
   Button,
   Card,
   Drawer,
   FormControl,
+  IconButton,
   Modal,
   Pagination,
 } from '@k8o/arte-odyssey';
-import { createElement } from 'react';
+import { type ComponentType, createElement } from 'react';
 
 import type {
   AlertProps,
@@ -19,9 +21,12 @@ import type {
   CardProps,
   DrawerProps,
   FormControlProps,
+  IconButtonProps,
+  IconProps,
   LayoutElementProps,
   ModalProps,
   PaginationProps,
+  TextProps,
 } from './catalog.ts';
 import { generatedRegistry } from './registry.generated.tsx';
 
@@ -129,6 +134,48 @@ const ModalRenderer = ({
   );
 };
 
+/**
+ * Render the spec's `Text` primitive as plain text. React accepts a string
+ * as a valid child / element, so the renderer returns the content directly.
+ * Without this, the spec model (`children: string[]` referencing other
+ * elements) has no way to express raw text content, and the LLM was
+ * reaching for empty `<div />` placeholders inside Heading / Anchor / Card.
+ */
+const TextRenderer = ({ element }: ComponentRenderProps<TextProps>) =>
+  element.props.content;
+
+/**
+ * Look up an ArteOdyssey icon component by name. The Catalog Zod enum
+ * already constrains `name` to a known icon, so the cast is safe — but we
+ * still null-check to avoid a hard crash if a stale spec carries a name
+ * that no longer exists in the library (e.g. after an icon rename).
+ */
+const IconRenderer = ({ element }: ComponentRenderProps<IconProps>) => {
+  const { name, size } = element.props;
+  const Component = (arteOdyssey as Record<string, unknown>)[name] as
+    | ComponentType<{ size?: 'sm' | 'md' | 'lg' }>
+    | undefined;
+  if (!Component) return null;
+  return <Component size={size ?? undefined} />;
+};
+
+const IconButtonRenderer = ({
+  element,
+  children,
+}: ComponentRenderProps<IconButtonProps>) => {
+  const { label, size, bg } = element.props;
+  return (
+    <IconButton
+      label={label}
+      size={size ?? undefined}
+      bg={bg ?? undefined}
+      onAction={noop}
+    >
+      {children}
+    </IconButton>
+  );
+};
+
 const PaginationRenderer = ({
   element,
 }: ComponentRenderProps<PaginationProps>) => {
@@ -176,6 +223,9 @@ export const registry: ComponentRegistry = {
   Drawer: DrawerRenderer,
   Modal: ModalRenderer,
   Pagination: PaginationRenderer,
+  Icon: IconRenderer,
+  IconButton: IconButtonRenderer,
+  Text: TextRenderer,
   div: layoutElementRenderer('div'),
   section: layoutElementRenderer('section'),
   header: layoutElementRenderer('header'),
