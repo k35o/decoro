@@ -1,28 +1,12 @@
 'use client';
 
 import type { Spec } from '@json-render/core';
-import { ViewIcon } from '@k8o/arte-odyssey';
-import { useState } from 'react';
 
 import type { ChatMessage } from '../lib/chat-types.ts';
-import type { DecoroMessage } from '../lib/use-decoro-chat.ts';
-import { useDecoroChat } from '../lib/use-decoro-chat.ts';
+import { type DecoroMessage, useDecoroChat } from '../lib/use-decoro-chat.ts';
+import { usePreviewBroadcast } from '../lib/use-preview-broadcast.ts';
 import { ChatPane } from './chat-pane.tsx';
-import { CodePanel } from './code-panel.tsx';
-import { PreviewFrame } from './preview-frame.tsx';
-import { ShareButton } from './share-button.tsx';
-import {
-  CodeBracketsIcon,
-  type TabItem,
-  TabSwitcher,
-} from './tab-switcher.tsx';
-
-type OutputTab = 'preview' | 'code';
-
-const OUTPUT_TABS: ReadonlyArray<TabItem<OutputTab>> = [
-  { id: 'preview', label: 'Preview', icon: <ViewIcon size="sm" /> },
-  { id: 'code', label: 'Code', icon: <CodeBracketsIcon /> },
-];
+import { OutputPanel } from './output-panel.tsx';
 
 export type WorkspaceSeed = {
   initialState: { messages: DecoroMessage[]; spec: Spec | null } | null;
@@ -31,25 +15,31 @@ export type WorkspaceSeed = {
 
 type Props = {
   seed: WorkspaceSeed;
+  /**
+   * Forwarded to the chat hook. Fires once when the first save mints a
+   * new conversation row — the parent updates the URL so a refresh
+   * lands on the same conversation.
+   */
+  onConversationCreated: (id: string) => void;
 };
 
 /**
- * The chat + preview + code panes. Re-mounts (via `key` from the parent)
+ * The chat + output composite. Re-mounts (via `key` from the parent)
  * whenever the seed changes, so `useDecoroChat`'s `useState` initializer
  * picks up the new initial messages / spec / conversationId without
  * needing a manual reset path on the hook.
- *
- * Lives in its own module so the parent shell stays under the
- * max-dependencies lint cap and the chat / preview / output concerns are
- * grouped together.
  */
-export const HomeWorkspace = ({ seed }: Props) => {
+export const HomeWorkspace = ({ seed, onConversationCreated }: Props) => {
   const { messages, spec, isStreaming, error, send } = useDecoroChat({
     api: '/api/generate',
     initialState: seed.initialState,
     initialConversationId: seed.conversationId,
+    onConversationCreated,
   });
-  const [tab, setTab] = useState<OutputTab>('preview');
+
+  // Broadcast spec changes on the preview channel so any popped-out
+  // window stays in sync with the embedded iframe.
+  usePreviewBroadcast(spec);
 
   const chatMessages: ChatMessage[] = messages.map((m) => ({
     id: m.id,
@@ -72,32 +62,11 @@ export const HomeWorkspace = ({ seed }: Props) => {
           }}
         />
       </section>
-      <section
-        aria-label="Output"
-        className="bg-bg-base flex flex-1 flex-col overflow-hidden rounded-xl shadow-sm"
-      >
-        <div className="border-border-subtle flex items-center justify-between border-b px-2 py-1">
-          <TabSwitcher
-            ariaLabel="Output"
-            tabs={OUTPUT_TABS}
-            value={tab}
-            onChange={setTab}
-          />
-          <ShareButton
-            spec={spec}
-            messages={chatMessages}
-            isStreaming={isStreaming}
-          />
-        </div>
-        <div className="relative flex-1 overflow-hidden">
-          <div hidden={tab !== 'preview'} className="h-full">
-            <PreviewFrame spec={spec} />
-          </div>
-          <div hidden={tab !== 'code'} className="h-full overflow-auto">
-            <CodePanel spec={spec} />
-          </div>
-        </div>
-      </section>
+      <OutputPanel
+        spec={spec}
+        chatMessages={chatMessages}
+        isStreaming={isStreaming}
+      />
     </>
   );
 };
