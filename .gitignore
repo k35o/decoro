@@ -56,6 +56,9 @@ settings.local.json
 # Design docs are kept local-only for now
 docs/
 
-# Share-snapshot store (Tier 2 sharing — see ADR-013).
-# Each file is `<id>.json` with a public conversation snapshot.
+# Share-snapshot store (legacy; superseded by Postgres in ADR-015).
+# One JSON file per snapshot; remove once `pnpm migrate:from-fs` has run.
 .decoro-shares/
+
+# Local Postgres data directory (mounted by compose.yml).
+.postgres-data/
