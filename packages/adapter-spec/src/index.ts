@@ -13,24 +13,21 @@ export type AdapterMetadata = {
 /**
  * Mapping from Catalog component name to a concrete component implementation.
  *
- * Parametric in `TComponent` so `@decoro/core` can stay framework-agnostic
- * (per ADR-004). Concrete adapters specialize this — e.g.
- * `adapter-arte-odyssey` will pin it to React component types.
+ * Parametric in `TComponent` so the core stays framework-agnostic.
+ * Concrete adapters specialize this — e.g. `adapter-arte-odyssey` pins it
+ * to React component types.
  */
 export type AdapterRegistry<TComponent = unknown> = Record<string, TComponent>;
 
 /**
- * Hooks an adapter exposes for turning a `json-render` Spec into TSX.
+ * Hooks an adapter exposes for turning a `json-render` Spec into source
+ * code.
  *
- * **MVP-only contract.** Today this shape assumes a single TSX string and a
- * single ES module import path — the React + ArteOdyssey pairing the MVP
- * targets. That assumption leaks "TSX / React" into adapter-spec, which is
- * supposed to be framework-agnostic. The next non-React adapter (Vue,
- * Svelte, Solid) will force this shape to grow into something like
- * `{ filename, content }[]` keyed by output target. Per ADR-004 we do not
- * pre-abstract — this comment is the contract that the broader shape is on
- * the first-release roadmap (see docs/mvp-scope.md "Beyond MVP"), not in
- * MVP itself.
+ * **Current shape assumes a single TSX file and a single ES module import
+ * path** — the React + ArteOdyssey pairing this MVP targets. Adding a
+ * non-React adapter (Vue, Svelte, Solid) will need this to grow into a
+ * multi-file output shape like `{ filename, content }[]`. Until that
+ * happens we keep the contract minimal.
  *
  * - `importPath`: where the generated code imports components from (e.g.
  *   `'@k8o/arte-odyssey'`).
@@ -46,10 +43,9 @@ export type AdapterCodeOutput = {
 
 /**
  * What an adapter must expose so Decoro can drive UI generation against a
- * specific component library.
- *
- * Intentionally minimal. Fields will harden as `adapter-arte-odyssey` (M3)
- * and the codegen wiring (M9) force them to.
+ * specific component library. Intentionally minimal — implement these four
+ * fields and Decoro will route through `decoro.config.ts`'s `adapter`
+ * binding.
  */
 export type Adapter<TComponent = unknown> = {
   metadata: AdapterMetadata;

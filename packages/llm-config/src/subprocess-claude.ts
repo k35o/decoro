@@ -1,3 +1,10 @@
+// `server-only` is a side-effect import that makes the bundler refuse to
+// include this module in client code. We spawn a child process here;
+// `node:child_process` is unavailable in the browser, and a stray client
+// import would otherwise produce a confusing build error far from the
+// real cause.
+// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+import 'server-only';
 import { spawn } from 'node:child_process';
 
 import type {

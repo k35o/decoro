@@ -2,23 +2,19 @@ import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
 import type { LlmConfig } from '@decoro/llm-config';
 
 /**
- * Decoro configuration. Edit this file to point Decoro at your preferred LLM
- * provider and model. API keys are read from environment variables (see
- * `.env.example` at the repo root); do not hard-code them here.
+ * Decoro configuration. Edit this file to point Decoro at your preferred
+ * LLM provider and design-system adapter. API keys are read from
+ * environment variables — set them in `apps/web/.env.local` (see
+ * `.env.example`), do not hard-code them here.
  *
- * Lives next to the Next.js app (rather than the repo root that
- * `docs/architecture.md` originally sketched) for two practical reasons:
- *   1. pnpm does not hoist workspace packages to the repo root, so a config at
- *      the repo root cannot resolve `@decoro/llm-config`.
- *   2. Next.js picks up `apps/web/.env.local` for the API key without extra
- *      wiring when this file is consumed from `apps/web` server code.
+ * Decoro is most thoroughly tested on Anthropic Claude. The other
+ * provider options are wired so you can run Decoro against whatever
+ * account / billing you already have.
  *
- * Switching providers is a one-line change. The library design hypothesis
- * (ADR-003) is verified primarily on Anthropic Claude — the other branches
- * are wired so contributors can smoke-test without an Anthropic key.
+ * Switching providers is a one-line change to `llm` below.
  *
- * Vercel AI Gateway (default — free monthly credit, one key reaches every
- * provider, lowest setup friction):
+ * Vercel AI Gateway (recommended — one key reaches Anthropic / Google /
+ * OpenAI; Vercel's free tier covers light dogfood):
  *   { provider: 'gateway', model: 'anthropic/claude-sonnet-4-6',
  *     apiKey: process.env['AI_GATEWAY_API_KEY'] }
  *
@@ -26,29 +22,29 @@ import type { LlmConfig } from '@decoro/llm-config';
  *   { provider: 'anthropic', model: 'claude-sonnet-4-6',
  *     apiKey: process.env['ANTHROPIC_API_KEY'] }
  *
- * Google Gemini direct (free tier):
+ * Google Gemini direct (free tier available):
  *   { provider: 'google', model: 'gemini-2.5-flash',
  *     apiKey: process.env['GOOGLE_GENERATIVE_AI_API_KEY'] }
  *
- * Local Claude CLI (subscription-backed monkey testing — no API key):
+ * Local Claude CLI (uses your personal Claude.ai subscription instead of
+ * an API key — for solo local dogfood only):
  *   { provider: 'subprocess-claude', model: 'sonnet' }
- * Spawns the locally installed `claude` binary per request and adapts its
- * `--print --output-format stream-json` output. Uses whatever account
- * `claude` is logged into. Process spawn adds ~1.5s/turn so this is for
- * manual dogfood only — keep an API-backed provider for tests / CI.
+ * Run `claude setup-token` once and put `CLAUDE_CODE_OAUTH_TOKEN` in
+ * `.env.local`. Each request spawns the `claude` binary (~1.5s overhead),
+ * so this is for manual exploration only — tests / CI should use an
+ * API-backed provider.
  *
- * IMPORTANT — subscription terms: this provider consumes the operator's
- * personal Claude.ai subscription quota (5-hour rate limit). It is OK to
- * use locally for self-driven dogfood, but DO NOT ship a deployment
- * pointed at this provider — exposing your subscription as a backend for
- * other users would violate Anthropic's ToS (effectively reselling
- * Claude). Production / multi-user deployments must use an API-backed
- * provider (`gateway`, `anthropic`, `google`).
+ * IMPORTANT: `subprocess-claude` consumes the operator's personal
+ * subscription quota (5-hour rate limit) and must NEVER be used in a
+ * deployment that other people can reach. Exposing your subscription as
+ * a backend for other users violates Anthropic's terms of service
+ * (effectively reselling Claude). Production / multi-user deployments
+ * must use an API-backed provider (`gateway`, `anthropic`, `google`).
  *
- * Adapter selection lives elsewhere for now — apps/web pins
- * `@decoro/adapter-arte-odyssey` directly. A `defineConfig` helper that
- * bundles adapter + LLM together can ship once we have a second adapter to
- * motivate the abstraction (per ADR-004).
+ * Why this file lives under `apps/web/` instead of the repo root:
+ * pnpm doesn't hoist workspace packages to the root, so a root-level
+ * config can't resolve `@decoro/llm-config`. Keeping it next to the
+ * Next.js app also lets it pick up `apps/web/.env.local` automatically.
  */
 export const llm: LlmConfig = {
   provider: 'subprocess-claude',
@@ -56,31 +52,30 @@ export const llm: LlmConfig = {
 };
 
 /**
- * Adapter binding. Pinned here so the rest of `apps/web` consumes the
- * adapter through the abstract `Adapter` contract — `code-panel.tsx`,
- * `preview/page.tsx`, and `/api/generate` all import this rather than
- * `@decoro/adapter-arte-odyssey` directly. Switching to a future
- * `@decoro/adapter-mui` etc. is a one-line change here, no consumer churn.
- *
- * Per ADR-004 we deliberately do not introduce a `defineConfig({ adapter,
- * llm })` wrapper — there's only one adapter today and one config field
- * pattern is enough for both bindings.
+ * Design-system adapter binding. The rest of `apps/web` imports `adapter`
+ * from this file rather than `@decoro/adapter-arte-odyssey` directly, so
+ * pointing Decoro at a different design system is a one-line change here:
+ * write your own `@your-org/adapter-<name>` implementing the `Adapter`
+ * contract from `@decoro/adapter-spec`, then swap the import / export
+ * below. No other code in `apps/web` needs to change.
  */
 // Typed as `typeof arteOdysseyAdapter` (not the bare `Adapter` interface)
 // so the registry's component type stays narrow — `Adapter` defaults
-// `TComponent` to `unknown`, which json-render's `ComponentRegistry` would
-// then refuse. Concrete adapter exports preserve the right specialization.
+// `TComponent` to `unknown`, which json-render's `ComponentRegistry`
+// would then refuse. Concrete adapter exports preserve the right
+// specialization.
 export const adapter = arteOdysseyAdapter;
 
 /**
- * Share-snapshot configuration (see ADR-013).
+ * Share-snapshot configuration.
  *
- * `publicBaseUrl` is the absolute origin Decoro should use when handing out
- * shareable URLs (e.g. `https://decoro.example.com`). When unset, the share
- * route falls back to `X-Forwarded-Proto` + `X-Forwarded-Host` (or `Host`)
- * — fine for plain `pnpm dev` and most reverse-proxy setups, but if your
- * proxy strips those headers the URL handed back to clients won't be
- * reachable from outside the box. Set this explicitly in that case.
+ * `publicBaseUrl` is the absolute origin Decoro uses when generating
+ * shareable URLs (e.g. `https://decoro.example.com`). Leave unset for
+ * local dev — the share route then falls back to the request's
+ * `X-Forwarded-Proto` + `X-Forwarded-Host` (or `Host`) headers, which
+ * works for `pnpm dev` and most reverse-proxy setups. Set this
+ * explicitly only if your proxy strips those headers, otherwise the
+ * shared URL handed back to clients won't be reachable from outside.
  *
  * No trailing slash.
  */

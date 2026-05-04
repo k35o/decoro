@@ -13,24 +13,23 @@ import type { LanguageModel } from 'ai';
 import { createSubprocessClaude } from './subprocess-claude.ts';
 
 /**
- * LLM configuration consumed by `createModel`. The shape is a discriminated
- * union so adding `provider: 'openai'` later only adds branches — existing
- * call sites stay exhaustive.
+ * LLM configuration consumed by `createModel`. Discriminated union so
+ * adding `provider: 'openai'` later only adds branches — existing call
+ * sites stay exhaustive.
  *
- * MVP-time provider matrix (per ADR-005):
- *   - `anthropic` is the verified target for the value-validation hypothesis
- *     (json-render structured output is strongest here).
- *   - `google` is wired so contributors without an Anthropic API key can
- *     still smoke-test on Gemini's free tier.
- *   - `gateway` routes through Vercel AI Gateway — one key reaches every
- *     supported provider (model strings look like `anthropic/...`,
- *     `google/...`, `openai/...`). Vercel ships a free monthly credit, so
- *     this is usually the lowest-friction path.
- *   - `subprocess-claude` shells out to the locally installed `claude` CLI
- *     and adapts its `--print --output-format stream-json` output. Lets
- *     you monkey-test against your Claude subscription with no per-token
- *     API charges. Process spawn overhead (~1.5s/turn) makes this unfit
- *     for tests / CI; use the API-backed providers there.
+ * Supported providers:
+ *   - `anthropic`: Claude via the Anthropic API (the most thoroughly
+ *     tested target for Decoro's structured JSON output).
+ *   - `google`: Gemini direct, useful when you only have a Google API
+ *     key (Gemini's free tier is generous).
+ *   - `gateway`: Vercel AI Gateway — one key reaches every supported
+ *     provider (model strings look like `anthropic/...`, `google/...`,
+ *     `openai/...`). Usually the lowest-friction path.
+ *   - `subprocess-claude`: shells out to the locally installed `claude`
+ *     CLI and adapts its `--print --output-format stream-json` output.
+ *     Lets you monkey-test against your Claude subscription with no
+ *     per-token API charges. Process spawn overhead (~1.5s/turn) makes
+ *     this unfit for tests / CI; use the API-backed providers there.
  */
 export type LlmConfig =
   | { provider: 'anthropic'; model: string; apiKey?: string }

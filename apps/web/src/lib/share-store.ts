@@ -1,3 +1,9 @@
+// `server-only` is a side-effect import that makes the bundler refuse to
+// include this module in client code. The store touches the filesystem
+// (`node:fs`, `process.cwd()`); an accidental client import would crash
+// the browser bundle.
+// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+import 'server-only';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -8,18 +14,17 @@ import {
 } from './share-types.ts';
 
 /**
- * Filesystem-backed snapshot store for Tier 2 sharing (see ADR-013).
+ * Filesystem-backed snapshot store for shareable spec snapshots.
  *
  * Snapshots live as one JSON file per id under `<repo-root>/.decoro-shares/`
  * (gitignored). The store deliberately has no delete or update method:
  * snapshots are immutable for the lifetime of the deployment, and removing
  * a share means deleting the file by hand. Suits a single-user self-host
- * MVP; revisit when sharing reaches Tier 3+ (auth, multi-user, lifecycle).
+ * setup; multi-user / auth / lifecycle features are a follow-up.
  *
  * Storage location is fixed for now. A `decoro.config.ts` extension point
- * (filesystem | vercel-kv | sqlite) is the natural next step when a
- * deployment target needs something other than local disk — left for a
- * follow-up PR per ADR-013.
+ * (filesystem | vercel-kv | sqlite | …) is the natural next step when a
+ * deployment target needs something other than local disk.
  */
 
 const SHARES_DIR = resolve(process.cwd(), '.decoro-shares');
