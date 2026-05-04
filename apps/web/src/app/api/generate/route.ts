@@ -42,42 +42,17 @@ const responsePreambleInstruction = [
   '    {"op":"replace","path":"/root","value":"btn"}\\n',
 ].join('\n');
 
-// ArteOdyssey components do not accept `className` (the design system
-// chooses styling internally). Only the layout HTML elements (div, section,
-// header, main) accept className, and only from the curated allowlist
-// declared in their schema. Codegen also strips unknown props as
-// belt-and-braces, but reminding the model up front is cheaper than
-// repairing the spec downstream.
-const propsDisciplineInstruction = [
-  'Prop discipline:',
-  '- Set only the props each component declares in its catalog entry.',
-  '- Do NOT add `className` to ArteOdyssey components (Button, Card, FormControl, TextField, etc.). They control their own styling.',
-  '- `className` is allowed ONLY on layout HTML elements (div, section, header, main), and only with the allowlisted utility tokens shown in their schema.',
-].join('\n');
-
-// Icons matter — chatbot / dashboard / nav UIs lean heavily on them and the
-// LLM defaults to Material Symbols / Heroicons names because that's the
-// dominant training data. Those names do not resolve in ArteOdyssey and
-// render as raw text in the preview. The `Icon` catalog entry already
-// constrains `name` to a Zod enum of valid ArteOdyssey icons; this
-// instruction makes the constraint visible up front.
-const iconUsageInstruction = [
-  'Icons:',
-  '- Use the `Icon` component with its `name` prop set to one of the names in the catalog enum (e.g. `<Icon name="HistoryIcon" />`).',
-  '- For icon-only actions, use `IconButton` with one `Icon` child: `<IconButton label="History"><Icon name="HistoryIcon" /></IconButton>`.',
-  '- NEVER invent icon names from Material Symbols / Heroicons / Font Awesome (`help_outline`, `menu_book`, `support_agent`, etc.) — they will not resolve and will render as raw text.',
-].join('\n');
-
-// The spec model has `children: string[]` referencing OTHER spec elements
-// by key — there is no way to nest a literal string under a parent. Without
-// a `Text` primitive the LLM defaults to empty `<div />` placeholders
-// inside Heading / Anchor / Card, leaving silent gaps in the preview.
-const textUsageInstruction = [
-  'Text content:',
-  '- Use the `Text` component (`{ "type": "Text", "props": { "content": "..." } }`) for any literal text inside another component — Heading text, Anchor labels, Card body copy, list item text, etc.',
-  '- Children are element keys, NOT raw strings — placing a string directly in `children` is invalid.',
-  '- Components with a dedicated text prop (Button.label, Alert.message, Badge.text, FormControl.label, IconButton.label) take strings via THAT prop, not via `Text` children.',
-  '- If a parent has nothing to say, omit the child entirely — do NOT insert an empty `<div />` placeholder.',
+// Universal spec discipline. Applies to every adapter — these are
+// constraints of the json-render spec model and the catalog contract,
+// not of any specific design system. The codegen also strips unknown
+// props as belt-and-braces, but reminding the model up front is cheaper
+// than repairing the spec downstream.
+const specDisciplineInstruction = [
+  'Spec discipline:',
+  '- Set only the props each component declares in its catalog entry. Unknown props are silently dropped by codegen.',
+  '- `children` is an array of OTHER element keys, not raw strings. To place literal text, use whatever text primitive the catalog provides (look for an entry like `Text`, or a `text` / `label` / `content` prop on the component itself).',
+  '- If a parent has nothing to say, omit the child — do NOT insert an empty placeholder element.',
+  '- Use ONLY components, props, and enum values that appear in the catalog. Do NOT invent component names, icon names, or option values from libraries the catalog does not list (Material Symbols, Heroicons, MUI, etc.) — they will not resolve and the preview will render raw text or an empty slot.',
 ].join('\n');
 
 // Decoro is a design tool — users want to *see* their UI, not run it. The
@@ -98,17 +73,22 @@ const mockupFirstInstruction = [
   '- Only use state bindings / actions when the user EXPLICITLY asks for an interactive prototype.',
 ].join('\n');
 
+// Order matters. Catalog first (the model needs to know what exists),
+// then library context (philosophy + library-specific gotchas from the
+// adapter), then universal Decoro rules (spec discipline, mockup-first,
+// response format). Library-specific guidance comes from
+// `adapter.metadata.promptGuidance` so adapter authors can tell the LLM
+// about THEIR library's quirks without touching this route.
 const systemPrompt = [
   adapter.catalog.prompt({ mode: 'standalone' }),
   '',
   'Library design principles:',
   adapter.metadata.designPrinciples,
+  ...(adapter.metadata.promptGuidance === undefined
+    ? []
+    : ['', adapter.metadata.promptGuidance]),
   '',
-  propsDisciplineInstruction,
-  '',
-  iconUsageInstruction,
-  '',
-  textUsageInstruction,
+  specDisciplineInstruction,
   '',
   mockupFirstInstruction,
   '',

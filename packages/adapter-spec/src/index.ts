@@ -3,11 +3,24 @@ import type { Catalog, Spec } from '@json-render/core';
 /**
  * Free-form description of the target component library, surfaced in the UI
  * and threaded into the generation prompt.
+ *
+ * - `designPrinciples`: high-level philosophy ("prefer semantic components",
+ *   "use primary color for the main CTA", etc.). Read by the operator
+ *   building intuition for the library and by the LLM as background
+ *   context.
+ * - `promptGuidance`: concrete "do this, not that" rules the LLM tends to
+ *   trip on for THIS specific library — the right component for icons,
+ *   props that don't accept `className`, library-specific text primitives,
+ *   etc. Kept separate from `designPrinciples` because Decoro's universal
+ *   prompt (response format, mockup-first generation, spec model rules)
+ *   sits beside it in the system prompt; mixing them dilutes both. Leave
+ *   undefined if the library has no known LLM gotchas worth calling out.
  */
 export type AdapterMetadata = {
   name: string;
   version: string;
   designPrinciples: string;
+  promptGuidance?: string;
 };
 
 /**
