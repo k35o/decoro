@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ConversationRecord } from '../lib/conversation-types.ts';
 import type { SnapshotRecord } from '../lib/share-types.ts';
@@ -53,10 +53,24 @@ export const HomeShell = ({ tagline }: Props) => {
   const conversationParam = searchParams.get('conversation');
 
   const [seed, setSeed] = useState<Seed>(FRESH_SEED);
+  // Latest active conversation id seen in render — used to short-circuit
+  // the resume effect when a URL change came from `router.replace` we
+  // ourselves issued (e.g. after the chat hook minted a row up front).
+  // Without this, the URL change would fire the resume effect, re-fetch
+  // the freshly-created (still single-message) row, and clobber the
+  // in-progress chat.
+  const activeConversationIdRef = useRef<string | null>(seed.conversationId);
+  activeConversationIdRef.current = seed.conversationId;
 
   // Resume an existing conversation when the URL points at one.
   useEffect(() => {
     if (conversationParam === null || conversationParam === '') {
+      return undefined;
+    }
+    if (activeConversationIdRef.current === conversationParam) {
+      // We already have this conversation loaded (most commonly: the
+      // chat hook just created the row and bumped the URL). No re-fetch
+      // needed.
       return undefined;
     }
     let cancelled = false;
@@ -136,10 +150,13 @@ export const HomeShell = ({ tagline }: Props) => {
 
   const handleConversationCreated = useCallback(
     (id: string) => {
-      // The chat hook just persisted a brand-new row. Reflect it in the
-      // URL so refresh / bookmark / share-link works. `replace` (not
-      // `push`) so the browser back stack doesn't pile up an entry per
-      // conversation start.
+      // The chat hook just persisted a brand-new row. Two things have to
+      // happen: reflect the id in the URL (so refresh / bookmark / share
+      // works), AND update `seed.conversationId` so the resume effect
+      // sees the URL change as one we initiated and skips the re-fetch
+      // that would clobber the in-progress chat. Same key — we do NOT
+      // want HomeWorkspace to remount.
+      setSeed((prev) => ({ ...prev, conversationId: id }));
       router.replace(`/?conversation=${id}`);
     },
     [router],

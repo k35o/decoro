@@ -178,6 +178,36 @@ export const useDecoroChat = ({
         content: m.text,
       }));
 
+      // Mint the conversation row up front (in parallel with the LLM
+      // stream) so the URL can update before the assistant has even
+      // started responding. Without this, the URL only changes when
+      // the stream completes — which is after several seconds of LLM
+      // latency. Falls back gracefully: if this POST fails, the
+      // post-stream `persist()` call below will retry.
+      const earlyCreate: Promise<void> | null =
+        conversationIdRef.current === null &&
+        persistApi !== null &&
+        persistApi !== ''
+          ? (async () => {
+              try {
+                const res = await fetch(persistApi, {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({
+                    messages: [...messagesRef.current, userMsg],
+                    spec: specRef.current ?? { root: '', elements: {} },
+                  }),
+                });
+                if (!res.ok) throw new Error(`POST ${res.status.toString()}`);
+                const data = (await res.json()) as { id: string };
+                conversationIdRef.current = data.id;
+                onCreatedRef.current?.(data.id);
+              } catch (err) {
+                console.warn('[useDecoroChat] early create failed:', err);
+              }
+            })()
+          : null;
+
       const working: Spec = specRef.current
         ? structuredClone(specRef.current)
         : { root: '', elements: {} };
@@ -240,6 +270,10 @@ export const useDecoroChat = ({
         parser.flush();
 
         setState((prev) => ({ ...prev, isStreaming: false }));
+        // Wait for the early-create POST (if any) to settle before the
+        // post-stream save fires, so `persist()` sees the row id and
+        // takes the PATCH branch instead of POSTing a duplicate.
+        if (earlyCreate) await earlyCreate;
         // Fire-and-forget the auto-save now that the stream has settled.
         // Reads from refs to capture the latest state without depending on
         // a re-render landing first.
@@ -250,7 +284,7 @@ export const useDecoroChat = ({
         setState((prev) => ({ ...prev, isStreaming: false, error }));
       }
     },
-    [api, persist],
+    [api, persist, persistApi],
   );
 
   const clear = useCallback(() => {
