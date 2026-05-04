@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { ConversationRecord } from '../lib/conversation-types.ts';
 import type { SnapshotRecord } from '../lib/share-types.ts';
@@ -36,14 +36,61 @@ type Props = {
  * a share) and the conversation sidebar; delegates the actual chat /
  * preview / code rendering to `<HomeWorkspace />` so swapping seeds is
  * just a key bump.
+ *
+ * URL is the source of truth for which conversation is active:
+ * - `/` → fresh chat
+ * - `/?conversation=<id>` → resume conversation `<id>`
+ * - `/?from=<shareId>` → fork from share `<shareId>` (becomes
+ *   `/?conversation=<newId>` after the first save mints a row)
+ *
+ * That makes refresh, browser back, and bookmarking behave the way
+ * users expect.
  */
 export const HomeShell = ({ tagline }: Props) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const fromShareId = searchParams.get('from');
+  const conversationParam = searchParams.get('conversation');
 
   const [seed, setSeed] = useState<Seed>(FRESH_SEED);
 
+  // Resume an existing conversation when the URL points at one.
   useEffect(() => {
+    if (conversationParam === null || conversationParam === '') {
+      return undefined;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/conversations/${conversationParam}`);
+        if (!res.ok) return;
+        const record = (await res.json()) as ConversationRecord;
+        // oxlint-disable-next-line typescript-eslint(no-unnecessary-condition)
+        if (cancelled) return;
+        setSeed({
+          key: `convo-${conversationParam}`,
+          initialState: {
+            messages: record.messages,
+            spec: toSpec(record.spec),
+          },
+          conversationId: record.id,
+        });
+      } catch {
+        // Ignore failures; the user just sees a fresh workspace.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationParam]);
+
+  // Fork from a share — `?from=<shareId>` seeds a brand-new conversation.
+  // `?conversation=` takes precedence over `?from=` so a saved fork's URL
+  // resolves to the conversation, not the original share.
+  useEffect(() => {
+    if (conversationParam !== null && conversationParam !== '') {
+      return undefined;
+    }
     if (fromShareId === null || fromShareId === '') {
       return undefined;
     }
@@ -53,8 +100,6 @@ export const HomeShell = ({ tagline }: Props) => {
         const res = await fetch(`/api/share/${fromShareId}`);
         if (!res.ok) return;
         const snapshot = (await res.json()) as SnapshotRecord;
-        // Cleanup may flip `cancelled` while the await is in flight; lint
-        // narrows the literal `false` initializer and can't see that.
         // oxlint-disable-next-line typescript-eslint(no-unnecessary-condition)
         if (cancelled) return;
         setSeed({
@@ -75,31 +120,30 @@ export const HomeShell = ({ tagline }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [fromShareId]);
+  }, [conversationParam, fromShareId]);
 
-  const handlePickConversation = (id: string) => {
-    void (async () => {
-      try {
-        const res = await fetch(`/api/conversations/${id}`);
-        if (!res.ok) return;
-        const record = (await res.json()) as ConversationRecord;
-        setSeed({
-          key: `convo-${id}`,
-          initialState: {
-            messages: record.messages,
-            spec: toSpec(record.spec),
-          },
-          conversationId: record.id,
-        });
-      } catch {
-        // Ignore — sidebar's error path will show on next refresh.
-      }
-    })();
-  };
+  const handlePickConversation = useCallback(
+    (id: string) => {
+      router.replace(`/?conversation=${id}`);
+    },
+    [router],
+  );
 
-  const handleNewConversation = () => {
+  const handleNewConversation = useCallback(() => {
     setSeed({ ...FRESH_SEED, key: `fresh-${Date.now().toString()}` });
-  };
+    router.replace('/');
+  }, [router]);
+
+  const handleConversationCreated = useCallback(
+    (id: string) => {
+      // The chat hook just persisted a brand-new row. Reflect it in the
+      // URL so refresh / bookmark / share-link works. `replace` (not
+      // `push`) so the browser back stack doesn't pile up an entry per
+      // conversation start.
+      router.replace(`/?conversation=${id}`);
+    },
+    [router],
+  );
 
   return (
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
@@ -111,7 +155,11 @@ export const HomeShell = ({ tagline }: Props) => {
           onNewConversation={handleNewConversation}
         />
         <div className="flex flex-1 gap-4 overflow-hidden">
-          <HomeWorkspace key={seed.key} seed={seed} />
+          <HomeWorkspace
+            key={seed.key}
+            seed={seed}
+            onConversationCreated={handleConversationCreated}
+          />
         </div>
       </main>
     </div>

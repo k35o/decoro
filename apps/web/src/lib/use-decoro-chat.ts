@@ -35,6 +35,13 @@ type Options = {
    * leave this unset — the first save then creates a brand-new row.
    */
   initialConversationId?: string | null;
+  /**
+   * Fires once when the first save mints a new conversation row. Used
+   * by the shell to update the URL (`?conversation=<id>`) so a refresh
+   * keeps the user on the same conversation. Not fired on subsequent
+   * PATCH saves or when `initialConversationId` was supplied.
+   */
+  onConversationCreated?: (id: string) => void;
 };
 
 type State = {
@@ -71,6 +78,7 @@ export const useDecoroChat = ({
   persistApi = '/api/conversations',
   initialState = null,
   initialConversationId = null,
+  onConversationCreated,
 }: Options) => {
   const [state, setState] = useState<State>(() =>
     initialState
@@ -93,6 +101,10 @@ export const useDecoroChat = ({
   // synchronously available without forcing a re-render that doesn't
   // change anything visible.
   const conversationIdRef = useRef<string | null>(initialConversationId);
+  // Latest callback in a ref so changing it across renders doesn't
+  // invalidate `persist` (which is in `send`'s dep list).
+  const onCreatedRef = useRef(onConversationCreated);
+  onCreatedRef.current = onConversationCreated;
 
   const persist = useCallback(
     async (messages: DecoroMessage[], spec: Spec | null) => {
@@ -112,6 +124,7 @@ export const useDecoroChat = ({
           if (!res.ok) throw new Error(`POST ${res.status.toString()}`);
           const data = (await res.json()) as { id: string };
           conversationIdRef.current = data.id;
+          onCreatedRef.current?.(data.id);
           return;
         }
         const res = await fetch(`${persistApi}/${conversationIdRef.current}`, {
