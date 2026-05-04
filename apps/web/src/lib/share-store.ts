@@ -1,12 +1,10 @@
 // `server-only` is a side-effect import that makes the bundler refuse to
-// include this module in client code. The store touches the filesystem
-// (`node:fs`, `process.cwd()`); an accidental client import would crash
-// the browser bundle.
+// include this module in client code. Postgres connection lives here.
 // oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
 import 'server-only';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { eq } from 'drizzle-orm';
 
+import { db, schema } from './db/client.ts';
 import {
   SHARE_ID_PATTERN,
   type SnapshotRecord,
@@ -14,40 +12,26 @@ import {
 } from './share-types.ts';
 
 /**
- * Filesystem-backed snapshot store for shareable spec snapshots.
+ * Postgres-backed share snapshot store (per ADR-015).
  *
- * Snapshots live as one JSON file per id under `<repo-root>/.decoro-shares/`
- * (gitignored). The store deliberately has no delete or update method:
- * snapshots are immutable for the lifetime of the deployment, and removing
- * a share means deleting the file by hand. Suits a single-user self-host
- * setup; multi-user / auth / lifecycle features are a follow-up.
+ * Snapshots are written immutably — the schema has no UPDATE path and the
+ * insert is a plain INSERT (a primary-key collision raises
+ * `SnapshotExistsError`, which the route handler retries with a fresh id).
+ * Reads validate the row against `snapshotRecordSchema` so a JSONB column
+ * tampered with directly in the DB still fails into "looks missing" rather
+ * than crashing the share page.
  *
- * Storage location is fixed for now. A `decoro.config.ts` extension point
- * (filesystem | vercel-kv | sqlite | …) is the natural next step when a
- * deployment target needs something other than local disk.
+ * Public API mirrors the previous filesystem implementation exactly so
+ * route handlers and `share/[id]/page.tsx` need no changes; the migration
+ * happens in this module alone.
  */
-
-const SHARES_DIR = resolve(process.cwd(), '.decoro-shares');
-
-const ensureDir = async () => {
-  await mkdir(SHARES_DIR, { recursive: true });
-};
-
-const filePathFor = (id: string): string => {
-  if (!SHARE_ID_PATTERN.test(id)) {
-    // Validated callers pass through `getSnapshot`; this guard catches
-    // direct misuse + makes it impossible to construct a path that escapes
-    // SHARES_DIR via traversal (`..`, slashes), even by accident.
-    throw new Error(`invalid share id: ${id}`);
-  }
-  return join(SHARES_DIR, `${id}.json`);
-};
 
 /**
  * Sentinel error for callers (e.g. `POST /api/share`) to catch and react to
  * an id collision by regenerating the id and retrying. Carries `code: 'EEXIST'`
  * so callers can match Node's filesystem convention without depending on the
- * underlying error class.
+ * underlying error class — the convention predates the Postgres swap and is
+ * worth keeping for the route's existing retry logic.
  */
 export class SnapshotExistsError extends Error {
   readonly code = 'EEXIST' as const;
@@ -58,20 +42,36 @@ export class SnapshotExistsError extends Error {
 }
 
 /**
- * Writes the snapshot exclusively (`flag: 'wx'`) — fails if a file already
- * exists at the same id. Snapshots are immutable per ADR-013; callers handle
- * the (astronomically rare) collision by regenerating the id and retrying.
+ * Writes the snapshot. Postgres' primary-key constraint enforces the
+ * immutability guarantee — a colliding id surfaces as `SnapshotExistsError`
+ * and the route regenerates the id rather than overwriting.
+ *
+ * `parentShareId` defaults to null (originated standalone). When this
+ * snapshot was created by forking another, the route passes the parent id
+ * so lineage queries become a recursive CTE later.
  */
-export const putSnapshot = async (record: SnapshotRecord): Promise<void> => {
-  await ensureDir();
-  const path = filePathFor(record.id);
+export const putSnapshot = async (
+  record: SnapshotRecord & { parentShareId?: string | null },
+): Promise<void> => {
   try {
-    await writeFile(path, JSON.stringify(record), {
-      encoding: 'utf8',
-      flag: 'wx',
+    await db.insert(schema.shares).values({
+      id: record.id,
+      createdAt: new Date(record.createdAt),
+      schemaVersion: record.schemaVersion,
+      messages: record.messages,
+      spec: record.spec,
+      parentShareId: record.parentShareId ?? null,
     });
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+    // postgres-js surfaces unique-violation as SQLSTATE '23505'. Drizzle
+    // may wrap it in DrizzleQueryError, so check both `err.code` and
+    // `err.cause.code`.
+    const code =
+      typeof err === 'object' && err !== null
+        ? ((err as { code?: string }).code ??
+          (err as { cause?: { code?: string } }).cause?.code)
+        : undefined;
+    if (code === '23505') {
       throw new SnapshotExistsError(record.id);
     }
     throw err;
@@ -79,8 +79,8 @@ export const putSnapshot = async (record: SnapshotRecord): Promise<void> => {
 };
 
 /**
- * Returns `null` for missing snapshots. Returns `null` (not throws) for files
- * that exist but fail re-validation — read corruption shouldn't 500 the share
+ * Returns `null` for missing snapshots. Returns `null` (not throws) for
+ * rows that fail re-validation — schema corruption shouldn't 500 the share
  * page, just look like a missing snapshot. Surfaces the parse error to logs
  * for the operator to diagnose.
  */
@@ -88,21 +88,20 @@ export const getSnapshot = async (
   id: string,
 ): Promise<SnapshotRecord | null> => {
   if (!SHARE_ID_PATTERN.test(id)) return null;
-  let raw: string;
-  try {
-    raw = await readFile(filePathFor(id), 'utf8');
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw err;
-  }
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch (err) {
-    console.error(`[share-store] corrupt JSON for ${id}:`, err);
-    return null;
-  }
-  const parsed = snapshotRecordSchema.safeParse(data);
+  const rows = await db
+    .select()
+    .from(schema.shares)
+    .where(eq(schema.shares.id, id))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  const parsed = snapshotRecordSchema.safeParse({
+    id: row.id,
+    createdAt: row.createdAt.toISOString(),
+    schemaVersion: row.schemaVersion,
+    messages: row.messages,
+    spec: row.spec,
+  });
   if (!parsed.success) {
     console.error(`[share-store] schema mismatch for ${id}:`, parsed.error);
     return null;
