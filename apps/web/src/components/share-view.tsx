@@ -48,7 +48,14 @@ export const ShareView = ({ snapshot }: Props) => {
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
       <AppHeader
         tagline="Shared snapshot · read-only"
-        rightSlot={<Anchor href="/">Open Decoro →</Anchor>}
+        rightSlot={
+          <div className="flex items-center gap-4">
+            <Anchor href={`/?from=${snapshot.id}`}>
+              Continue this conversation →
+            </Anchor>
+            <Anchor href="/">Open Decoro</Anchor>
+          </div>
+        }
       />
       <main className="flex flex-1 gap-4 overflow-hidden p-4">
         <section
