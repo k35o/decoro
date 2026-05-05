@@ -1,7 +1,7 @@
 'use client';
 
 import { CloseIcon, IconButton, PlusIcon, Spinner } from '@k8o/arte-odyssey';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ConversationSummary } from '../lib/conversation-types.ts';
 
@@ -27,12 +27,15 @@ type LoadState =
  * Failing requests don't take the chat down with them — the sidebar
  * shows an inline error and the chat keeps running.
  */
+const ACTIVE_POLL_INTERVAL_MS = 2000;
+
 export const ConversationsSidebar = ({
   activeId,
   onPickConversation,
   onNewConversation,
 }: Props) => {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [activeJobs, setActiveJobs] = useState<ReadonlySet<string>>(new Set());
 
   const refresh = useCallback(async () => {
     setState({ kind: 'loading' });
@@ -54,6 +57,46 @@ export const ConversationsSidebar = ({
   useEffect(() => {
     void refresh();
   }, [refresh, activeId]);
+
+  // Poll the active-jobs endpoint so the sidebar shows a spinner on
+  // any conversation currently generating in the background — including
+  // ones the operator isn't looking at right now (a turn started
+  // pre-navigation, or a teammate's in-flight stream). Cheap: in-memory
+  // lookup, no DB hit per poll.
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/conversations/active');
+        if (!res.ok) return;
+        const data = (await res.json()) as { conversationIds: string[] };
+        if (cancelled) return;
+        setActiveJobs(new Set(data.conversationIds));
+      } catch {
+        // Silent — the spinner not appearing is a reasonable failure.
+      }
+    };
+    void poll();
+    const handle = setInterval(() => {
+      void poll();
+    }, ACTIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(handle);
+    };
+  }, []);
+
+  // Refresh the conversation list whenever a job finishes (an id
+  // disappeared from the active set). Newly-completed conversations
+  // need their title / updated_at re-pulled so the sidebar rises to
+  // the top.
+  const previousActiveRef = useRef<ReadonlySet<string>>(activeJobs);
+  useEffect(() => {
+    const prev = previousActiveRef.current;
+    const completed = [...prev].some((id) => !activeJobs.has(id));
+    if (completed) void refresh();
+    previousActiveRef.current = activeJobs;
+  }, [activeJobs, refresh]);
 
   const onDelete = useCallback(
     async (id: string) => {
@@ -112,6 +155,7 @@ export const ConversationsSidebar = ({
           <ul className="flex flex-col gap-0.5">
             {state.conversations.map((c) => {
               const isActive = c.id === activeId;
+              const isGenerating = activeJobs.has(c.id);
               return (
                 <li key={c.id} className="group/row relative">
                   <button
@@ -125,7 +169,20 @@ export const ConversationsSidebar = ({
                         : 'text-fg-base hover:bg-bg-subtle/60'
                     }`}
                   >
-                    <span className="line-clamp-2 break-words">{c.title}</span>
+                    <span className="flex items-start gap-2">
+                      {isGenerating ? (
+                        <span
+                          className="text-fg-mute mt-0.5 shrink-0"
+                          aria-label="Generating"
+                          title="Generating"
+                        >
+                          <Spinner size="sm" />
+                        </span>
+                      ) : null}
+                      <span className="line-clamp-2 break-words">
+                        {c.title}
+                      </span>
+                    </span>
                   </button>
                   <span className="absolute top-1 right-1 opacity-0 group-hover/row:opacity-100">
                     <IconButton
