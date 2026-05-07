@@ -183,10 +183,16 @@ export const useDecoroChat = ({
       };
     });
     const working = cloneSpec(specRef.current);
+    // Once the model emits its first JSON patch, the prose preamble has
+    // done its job (per the system prompt: line 1 prose, line 2+ JSON).
+    // Any prose chunks that arrive after the first patch are the model
+    // looping its preamble — a frequent failure mode. Drop them.
+    let patchSeen = false;
     const parser = createMixedStreamParser({
       onText(chunk) {
         const id = assistantId;
         if (id === null) return;
+        if (patchSeen) return;
         // Strip any JSON-patch tail the mixed-stream parser couldn't
         // recognize (model occasionally jams prose + JSON onto the
         // same line; stripPatchJson keeps the prose, drops the rest).
@@ -200,6 +206,7 @@ export const useDecoroChat = ({
         }));
       },
       onPatch(patch) {
+        patchSeen = true;
         applySpecPatch(working, patch);
         setState((prev) => ({
           ...prev,
