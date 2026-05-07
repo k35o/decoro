@@ -105,6 +105,12 @@ const HAND_OVERRIDDEN_COMPONENTS = new Set([
   // hand-written entry in catalog.ts wins; see also the hand-written `Icon`
   // entry which gives the LLM the constrained name enum.
   'IconButton',
+  // LinkButton's `startIcon` / `endIcon` are typed as `string` by the
+  // generator, but they're really `ReactNode` slots — the catalog
+  // narrows them to the icon-name enum so the AI picks valid names,
+  // and `passthroughFormatter` rewrites the serialised string into a
+  // `{<IconName />}` JSX expression at codegen time.
+  'LinkButton',
 ]);
 
 type CliFlags = { from: string };

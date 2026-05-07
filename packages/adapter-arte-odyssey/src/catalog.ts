@@ -134,6 +134,31 @@ const iconButtonProps = z.object({
 });
 
 /**
+ * `startIcon` / `endIcon` are JSX `ReactNode` slots in the real
+ * ArteOdyssey component, but we type them as the icon-name enum in the
+ * catalog so the AI picks a valid name. Codegen
+ * (`packages/adapter-arte-odyssey/src/codegen-shared.ts`) intercepts
+ * these prop names and rewrites the string into a `{<IconName />}`
+ * JSX expression while adding the icon component to the import line.
+ *
+ * Without this hand-override, the auto-generated entry types them as
+ * raw `z.string()`, the AI fills them with arbitrary names (or even
+ * Material Symbols glyphs), and the codegen serialises them as
+ * `startIcon="…"` — invalid TSX that fails to compile when pasted
+ * into a real codebase.
+ */
+const linkButtonProps = z.object({
+  variant: z.enum(['contained', 'outlined', 'skeleton']).nullable(),
+  size: z.enum(['sm', 'md', 'lg']).nullable(),
+  color: z.enum(['primary', 'secondary', 'gray']).nullable(),
+  href: z.string(),
+  startIcon: z.enum(ICON_NAMES).nullable(),
+  endIcon: z.enum(ICON_NAMES).nullable(),
+  active: z.boolean().nullable(),
+  openInNewTab: z.boolean().nullable(),
+});
+
+/**
  * Catalog primitive for raw text content. The json-render spec model has
  * `children: string[]` referring to OTHER spec elements by key — there is
  * no way to nest a literal string under a parent. Without a `Text`
@@ -235,6 +260,12 @@ export const catalog = defineCatalog(schema, {
       slots: [],
       description:
         'Raw text content. Use this whenever you need a literal string inside another component (Heading title, Anchor label, Card body copy, list item text, etc.). Without `Text`, children would just be element keys — there is no other way to express text content.',
+    },
+    LinkButton: {
+      props: linkButtonProps,
+      slots: ['default'],
+      description:
+        'Anchor styled as a button. Set `startIcon` / `endIcon` to a valid Icon name from the catalog enum (e.g. `"HistoryIcon"`); leave them null when no icon is needed. Use for navigation that should look like a primary or secondary CTA.',
     },
     IconButton: {
       props: iconButtonProps,
