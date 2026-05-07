@@ -47,8 +47,8 @@ import type { LlmConfig } from '@decoro/llm-config';
  * Next.js app also lets it pick up `apps/web/.env.local` automatically.
  */
 export const llm: LlmConfig = {
-  provider: 'subprocess-claude',
-  model: 'sonnet',
+  provider: 'subprocess-codex',
+  model: 'gpt-5.4',
 };
 
 /**
