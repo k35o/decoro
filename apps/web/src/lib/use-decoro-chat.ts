@@ -66,16 +66,24 @@ const emptyState: State = {
 const buildEmptySpec = (): Spec => ({ root: '', elements: {} });
 
 /**
- * Heuristic: does this chunk look like a JSON-patch-shaped string the
- * mixed-stream parser failed to parse? Catches the common shapes the
- * model emits when it goes off the response-format rails — patches
- * concatenated with prose on the same line, deeply-nested gibberish,
- * or partial `{"op":"...`. Conservative — only blocks chunks that
- * begin with the patch sentinel; ordinary prose passes through.
+ * Strip JSON-patch-shaped tail from a prose chunk.
+ *
+ * `createMixedStreamParser` splits by newline: clean
+ * `prose\n{patch}\n` streams into onText / onPatch correctly. When the
+ * model emits prose and JSON on the same line (no newline between),
+ * the entire run lands in onText and the chat bubble fills with
+ * `{"op":"add",...}` gibberish even though the rendered preview is
+ * fine (other patches still parsed).
+ *
+ * Truncate at the first `{"op|path|value|type":` sentinel — anything
+ * before it is the legitimate prose preamble; anything after it is
+ * the malformed-JSON tail the parser gave up on. Returns '' when
+ * nothing is left.
  */
-const looksLikePatchJson = (chunk: string): boolean => {
-  const trimmed = chunk.trimStart();
-  return /^\{\s*"(?:op|path|value|type)"\s*:/.test(trimmed);
+const stripPatchJson = (chunk: string): string => {
+  const match = /\{\s*"(?:op|path|value|type)"\s*:/.exec(chunk);
+  if (!match) return chunk;
+  return chunk.slice(0, match.index);
 };
 
 const cloneSpec = (spec: Spec | null): Spec => {
@@ -179,19 +187,15 @@ export const useDecoroChat = ({
       onText(chunk) {
         const id = assistantId;
         if (id === null) return;
-        // Defensive filter: when the model emits malformed JSONL —
-        // patches without trailing newlines, deeply-nested gibberish,
-        // or "value": {"op": ...} chains — `createMixedStreamParser`
-        // gives up parsing the line and forwards it to onText. That
-        // dumps raw JSON into the chat bubble. The rendered preview is
-        // unaffected (good lines still parse via onPatch), but the
-        // assistant message becomes unreadable. Drop chunks that
-        // clearly look like JSON-patch-shaped text.
-        if (looksLikePatchJson(chunk)) return;
+        // Strip any JSON-patch tail the mixed-stream parser couldn't
+        // recognize (model occasionally jams prose + JSON onto the
+        // same line; stripPatchJson keeps the prose, drops the rest).
+        const cleaned = stripPatchJson(chunk);
+        if (cleaned === '') return;
         setState((prev) => ({
           ...prev,
           messages: prev.messages.map((m) =>
-            m.id === id ? { ...m, text: m.text + chunk } : m,
+            m.id === id ? { ...m, text: m.text + cleaned } : m,
           ),
         }));
       },
