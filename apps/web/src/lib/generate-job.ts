@@ -92,6 +92,17 @@ const buildLlmMessages = (
   return llmMessages;
 };
 
+/**
+ * Hard ceiling on how much the model may emit in a single turn. Sized
+ * for "verbose UI spec for a complex screen" with margin (a typical
+ * full mockup spec runs ~5k tokens; 8k leaves headroom for nested
+ * layouts), but tight enough to kill a runaway in seconds when a model
+ * loops on the prose preamble or the JSONL never converges. The
+ * `streamText` abort propagates through the job's signal, so an
+ * over-cap turn fails fast instead of running for minutes.
+ */
+const MAX_OUTPUT_TOKENS = 8000;
+
 const normalizeSpecForDb = (spec: Spec) => ({
   root: spec.root,
   elements: Object.fromEntries(
@@ -130,6 +141,7 @@ export const startGenerateJob = (params: {
         system: systemPrompt,
         messages: llmMessages,
         abortSignal: job.signal,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
       });
 
       for await (const chunk of result.textStream) {
