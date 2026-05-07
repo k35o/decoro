@@ -11,25 +11,47 @@ import * as schema from './schema.ts';
 /**
  * Singleton Postgres connection pool + Drizzle client.
  *
- * Module-level instantiation is intentional: Next.js dev hot-reloads route
- * handlers but keeps the module instance, so the pool is created once per
- * server lifetime instead of per request. In production (next start) the
- * same applies — one pool per process.
+ * Lazy-initialized on first access. Module-level eager init was the
+ * original shape, but Next.js's build step does a "collect page data"
+ * pass that imports route modules without runtime env vars present.
+ * Eagerly throwing on missing `DATABASE_URL` failed the build for any
+ * deployment that wires the env in at runtime (Vercel, Docker run,
+ * etc.). Deferring lets module evaluation succeed and surfaces the
+ * config error only when the connection is actually used.
+ *
+ * Once a pool is created it persists for the process lifetime —
+ * Next dev hot-reloads route handlers but keeps the module instance,
+ * and `next start` runs one process per worker.
  */
-const databaseUrl = process.env['DATABASE_URL'];
-if (databaseUrl === undefined || databaseUrl === '') {
-  throw new Error(
-    'DATABASE_URL is not set. Copy `.env.example` to `apps/web/.env.local` and start Postgres with `docker compose up -d` from the repo root.',
-  );
-}
 
-const queryClient = postgres(databaseUrl, {
-  // Default 10 concurrent connections is plenty for a self-hosted single-
-  // instance Decoro. Bump if you put it behind a load balancer with high
-  // concurrent traffic (and add PgBouncer in front).
-  max: 10,
+type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
+
+let dbInstance: DrizzleDb | null = null;
+
+const ensureDb = (): DrizzleDb => {
+  if (dbInstance) return dbInstance;
+  const databaseUrl = process.env['DATABASE_URL'];
+  if (databaseUrl === undefined || databaseUrl === '') {
+    throw new Error(
+      'DATABASE_URL is not set. Copy `.env.example` to `apps/web/.env.local` and start Postgres with `docker compose up -d` from the repo root.',
+    );
+  }
+  // Default 10 concurrent connections is plenty for a self-hosted
+  // single-instance Decoro. Bump if you put it behind a load
+  // balancer with high concurrent traffic (and add PgBouncer in front).
+  dbInstance = drizzle(postgres(databaseUrl, { max: 10 }), { schema });
+  return dbInstance;
+};
+
+/**
+ * Proxy that defers initialization until the first method call. Caller
+ * code keeps writing `db.select(...)` / `db.insert(...)` as if the
+ * client were eagerly created.
+ */
+export const db = new Proxy({} as DrizzleDb, {
+  get(_target, prop, receiver) {
+    return Reflect.get(ensureDb(), prop, receiver) as unknown;
+  },
 });
-
-export const db = drizzle(queryClient, { schema });
 
 export { schema };
