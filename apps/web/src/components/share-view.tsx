@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import type { SnapshotRecord } from '../lib/share-types.ts';
 import { toSpec } from '../lib/spec-schema.ts';
+import { usePreviewBroadcast } from '../lib/use-preview-broadcast.ts';
 import { AppHeader } from './app-header.tsx';
 import { CodePanel } from './code-panel.tsx';
 import { PreviewFrame } from './preview-frame.tsx';
@@ -32,6 +33,10 @@ const OUTPUT_TABS: ReadonlyArray<TabItem<OutputTab>> = [
 export const ShareView = ({ snapshot }: Props) => {
   const [tab, setTab] = useState<OutputTab>('preview');
   const spec = toSpec(snapshot.spec);
+  // Broadcast on the preview channel so the embedded iframe receives the
+  // spec via the same mechanism HomeShell uses, and so popping out the
+  // preview window from a share page works without extra wiring.
+  usePreviewBroadcast(spec);
   // Format the captured-at stamp on the client only. `toLocaleString()`
   // depends on the runtime's locale + timezone; running it during SSR and
   // again on hydration produces a mismatch warning whenever the recipient's
@@ -48,7 +53,14 @@ export const ShareView = ({ snapshot }: Props) => {
     <div className="bg-bg-surface text-fg-base flex h-dvh flex-col">
       <AppHeader
         tagline="Shared snapshot · read-only"
-        rightSlot={<Anchor href="/">Open Decoro →</Anchor>}
+        rightSlot={
+          <div className="flex items-center gap-4">
+            <Anchor href={`/?from=${snapshot.id}`}>
+              Continue this conversation →
+            </Anchor>
+            <Anchor href="/">Open Decoro</Anchor>
+          </div>
+        }
       />
       <main className="flex flex-1 gap-4 overflow-hidden p-4">
         <section
@@ -100,7 +112,7 @@ export const ShareView = ({ snapshot }: Props) => {
           />
           <div className="relative flex-1 overflow-hidden">
             <div hidden={tab !== 'preview'} className="h-full">
-              <PreviewFrame spec={spec} />
+              <PreviewFrame />
             </div>
             <div hidden={tab !== 'code'} className="h-full overflow-auto">
               <CodePanel spec={spec} />

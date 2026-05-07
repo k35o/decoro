@@ -9,7 +9,11 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "check": "vp check",
-    "check:write": "vp check --fix"
+    "check:write": "vp check --fix",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "migrate:from-fs": "tsx src/lib/db/migrate-from-fs.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.71",
@@ -20,7 +24,9 @@
     "@json-render/react": "catalog:",
     "@k8o/arte-odyssey": "catalog:",
     "ai": "6.0.168",
+    "drizzle-orm": "0.45.2",
     "next": "16.2.4",
+    "postgres": "3.4.9",
     "react": "catalog:",
     "react-dom": "catalog:",
     "shiki": "catalog:",
@@ -32,6 +38,8 @@
     "@types/node": "24.12.2",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "postcss": "catalog:"
+    "drizzle-kit": "0.31.10",
+    "postcss": "catalog:",
+    "tsx": "4.21.0"
   }
 }

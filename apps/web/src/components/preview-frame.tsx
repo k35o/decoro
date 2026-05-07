@@ -1,63 +1,21 @@
-'use client';
-
-import type { Spec } from '@json-render/core';
-import { useEffect, useRef, useState } from 'react';
-
-import {
-  type PreviewInboundMessage,
-  isPreviewMessage,
-} from '../lib/preview-message.ts';
-
-type Props = {
-  spec: Spec | null;
-};
-
 /**
- * Hosts the `/preview` page in an iframe and pushes the current Spec into it
- * via postMessage. Re-sends whenever `spec` changes after the iframe is ready.
+ * Hosts the `/preview` route in an iframe so the adapter's style space
+ * stays isolated from Decoro's own UI (ADR-006).
  *
- * `spec === null` means the user has not asked for anything yet — leave the
- * iframe in its built-in "Waiting for a spec…" state instead of posting.
+ * Spec sync runs over a BroadcastChannel rather than parent↔iframe
+ * postMessage — see `lib/use-preview-broadcast.ts`. Both the embedded
+ * iframe and any popped-out preview window subscribe to the same
+ * channel, so this component just renders the iframe and otherwise has
+ * nothing to wire up.
  */
-export const PreviewFrame = ({ spec }: Props) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      // Origin check alone lets any other same-origin window (devtools panes,
-      // future admin pages, etc.) impersonate the iframe. The source check
-      // pins acceptance to the Window we actually own.
-      if (event.source !== iframeRef.current?.contentWindow) return;
-      if (event.origin !== window.location.origin) return;
-      if (!isPreviewMessage(event.data)) return;
-      if (event.data.type === 'decoro:ready') setReady(true);
-    };
-    window.addEventListener('message', handler);
-    return () => {
-      window.removeEventListener('message', handler);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ready || spec === null) return;
-    const message: PreviewInboundMessage = { type: 'decoro:spec', spec };
-    iframeRef.current?.contentWindow?.postMessage(
-      message,
-      window.location.origin,
-    );
-  }, [ready, spec]);
-
-  return (
-    // The iframe exists for style-space isolation (ADR-006), not for security
-    // sandboxing — both sides are first-party Decoro routes, so an HTML
-    // sandbox would only obstruct postMessage without buying anything.
-    // oxlint-disable-next-line eslint-plugin-react(iframe-missing-sandbox)
-    <iframe
-      ref={iframeRef}
-      src="/preview"
-      title="Decoro preview"
-      className="size-full border-0"
-    />
-  );
-};
+export const PreviewFrame = () => (
+  // The iframe exists for style-space isolation (ADR-006), not for security
+  // sandboxing — both sides are first-party Decoro routes, so an HTML
+  // sandbox would only obstruct messaging without buying anything.
+  // oxlint-disable-next-line eslint-plugin-react(iframe-missing-sandbox)
+  <iframe
+    src="/preview"
+    title="Decoro preview"
+    className="size-full border-0"
+  />
+);

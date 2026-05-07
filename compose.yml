@@ -1,0 +1,22 @@
+name: decoro
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: decoro
+      POSTGRES_PASSWORD: decoro
+      POSTGRES_DB: decoro
+    ports:
+      # Default Postgres port. Change here (and in apps/web/.env.local
+      # DATABASE_URL) if 5432 collides with a Postgres you're already
+      # running locally.
+      - '5432:5432'
+    volumes:
+      - ./.postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U decoro -d decoro']
+      interval: 5s
+      timeout: 5s
+      retries: 5
