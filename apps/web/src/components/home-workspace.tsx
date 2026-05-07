@@ -41,11 +41,12 @@ export const HomeWorkspace = ({ seed, onConversationCreated }: Props) => {
   // window stays in sync with the embedded iframe.
   usePreviewBroadcast(spec);
 
-  const chatMessages: ChatMessage[] = messages.map((m) => ({
-    id: m.id,
-    role: m.role,
-    text: m.text,
-  }));
+  // Pass through attachments — earlier this map only forwarded
+  // {id, role, text} from the pre-attachments era and dropped any
+  // image attachments on the floor before the chat pane could render
+  // them. ChatMessage and DecoroMessage are aliased now, so a direct
+  // assignment keeps the shape in lockstep.
+  const chatMessages: ChatMessage[] = messages;
 
   return (
     <>
