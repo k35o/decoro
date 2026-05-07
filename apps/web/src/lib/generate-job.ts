@@ -69,26 +69,98 @@ const systemPrompt = [
 const isMeaningfulSpec = (spec: Spec): boolean =>
   spec.root !== '' && Object.keys(spec.elements).length > 0;
 
+/**
+ * Convert a Decoro `ChatMessage` to the AI SDK `ModelMessage` shape.
+ *
+ * Text-only messages stay as `content: string` (the SDK's narrow
+ * happy path; cheaper to serialize over the wire). When the user
+ * attached images, switch to the multimodal array shape:
+ * `[{type:'text'}, {type:'file', mediaType, data: <data URI>}]`.
+ *
+ * `'file'` (not `'image'`) is the AI SDK v5 part type for binary
+ * media. Anthropic / Google / Vercel AI Gateway providers all accept
+ * `data:` URIs natively; we don't need to base64-decode.
+ */
+const toModelMessage = (m: ChatMessage): ModelMessage => {
+  if (m.role === 'assistant') {
+    // The LLM SDK only accepts simple text content for prior assistant
+    // turns in a multi-turn conversation; assistant messages never
+    // carry attachments anyway.
+    return { role: 'assistant', content: m.text };
+  }
+  if (!m.attachments || m.attachments.length === 0) {
+    return { role: 'user', content: m.text };
+  }
+  return {
+    role: 'user',
+    content: [
+      ...(m.text === '' ? [] : [{ type: 'text' as const, text: m.text }]),
+      ...m.attachments.map((a) => ({
+        type: 'file' as const,
+        mediaType: a.mediaType,
+        data: a.dataUri,
+      })),
+    ],
+  };
+};
+
+type UserModelMessage = Extract<ModelMessage, { role: 'user' }>;
+
+/**
+ * Replace the text content of a user message with `newText`, leaving
+ * any image parts (in the multimodal array form) intact. The caller
+ * has already verified the message is `role: 'user'`.
+ */
+const replaceUserText = (
+  msg: UserModelMessage,
+  newText: string,
+): UserModelMessage => {
+  if (typeof msg.content === 'string') {
+    return { ...msg, content: newText };
+  }
+  const firstTextIdx = msg.content.findIndex((p) => p.type === 'text');
+  if (firstTextIdx < 0) {
+    return {
+      ...msg,
+      content: [{ type: 'text', text: newText }, ...msg.content],
+    };
+  }
+  const nextContent = msg.content.map((part, i) =>
+    i === firstTextIdx && part.type === 'text'
+      ? { ...part, text: newText }
+      : part,
+  );
+  return { ...msg, content: nextContent };
+};
+
 const buildLlmMessages = (
   messages: ChatMessage[],
   inputSpec: Spec,
 ): ModelMessage[] => {
   const llmMessages: ModelMessage[] = messages
     .filter((m) => !(m.role === 'assistant' && m.text === ''))
-    .map((m) => ({ role: m.role, content: m.text }));
+    .map((m) => toModelMessage(m));
   const lastIdx = llmMessages.length - 1;
   if (lastIdx < 0) return llmMessages;
   const last = llmMessages[lastIdx];
-  if (last?.role !== 'user' || typeof last.content !== 'string') {
-    return llmMessages;
+  if (last?.role !== 'user') return llmMessages;
+  // Find the existing text in the last user message — string-shaped if
+  // it's text-only, or the first text part of the multimodal array —
+  // and rewrite it through `buildUserPrompt` so the LLM sees the
+  // current spec as edit context (M8 iteration). Image parts pass
+  // through unchanged.
+  let existingText: string;
+  if (typeof last.content === 'string') {
+    existingText = last.content;
+  } else {
+    const textPart = last.content.find((p) => p.type === 'text');
+    existingText = textPart?.type === 'text' ? textPart.text : '';
   }
-  llmMessages[lastIdx] = {
-    ...last,
-    content: buildUserPrompt({
-      prompt: last.content,
-      currentSpec: isMeaningfulSpec(inputSpec) ? inputSpec : undefined,
-    }),
-  };
+  const augmented = buildUserPrompt({
+    prompt: existingText,
+    currentSpec: isMeaningfulSpec(inputSpec) ? inputSpec : undefined,
+  });
+  llmMessages[lastIdx] = replaceUserText(last, augmented);
   return llmMessages;
 };
 

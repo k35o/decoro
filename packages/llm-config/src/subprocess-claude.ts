@@ -72,25 +72,38 @@ const collectText = (parts: ReadonlyArray<{ type: string }>): string =>
  * Conversation history is concatenated into the user prompt with role
  * labels — the LLM sees the full back-and-forth, including its own prior
  * JSONL patches, so iteration prompts (`buildUserPrompt`) work the same as
- * with API-backed providers. Tool / file / image parts are dropped:
- * Decoro's `/api/generate` only ever sends text, and the CLI doesn't have
- * a clean way to round-trip the rest.
+ * with API-backed providers. Tool / file / image parts are dropped: the
+ * CLI's `--print` mode is text-only. When a non-text part shows up we
+ * log a warning so the operator notices that their image attachment is
+ * being silently ignored, and switches to an API-backed provider for
+ * vision turns. (`claude --image` exists for true CLI-side vision but
+ * isn't wired through this provider yet — see ADR-014 follow-up.)
  */
 const flattenPrompt = (
   prompt: LanguageModelV2Prompt,
 ): { system: string; user: string } => {
   const systemParts: string[] = [];
   const conversation: string[] = [];
+  let droppedNonTextParts = 0;
   for (const msg of prompt) {
     if (msg.role === 'system') {
       systemParts.push(msg.content);
       continue;
     }
     if (msg.role === 'tool') continue;
+    const nonTextCount = msg.content.filter(
+      (p) => (p as { type?: string }).type !== 'text',
+    ).length;
+    droppedNonTextParts += nonTextCount;
     const text = collectText(msg.content);
     if (text === '') continue;
     const label = msg.role === 'assistant' ? 'ASSISTANT' : 'USER';
     conversation.push(`${label}:\n${text}`);
+  }
+  if (droppedNonTextParts > 0) {
+    console.warn(
+      `[subprocess-claude] dropped ${droppedNonTextParts.toString()} non-text content part(s) (the CLI provider is text-only). Switch to gateway / anthropic / google for vision turns.`,
+    );
   }
   return {
     system: systemParts.join('\n\n'),
