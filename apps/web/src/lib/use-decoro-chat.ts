@@ -7,14 +7,17 @@ import {
 } from '@json-render/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { ChatMessage, ImageAttachment } from './chat-types.ts';
 import type { ConversationRecord } from './conversation-types.ts';
 import type { StreamEvent } from './stream-events.ts';
 
-export type DecoroMessage = {
-  id: string;
-  role: 'user' | 'assistant';
-  text: string;
-};
+/**
+ * In-process chat message shape. Aliased to `ChatMessage` so the hook
+ * and the wire format stay in lockstep (attachments included). Kept
+ * as a distinct export for callers that already import this type
+ * from the hook module.
+ */
+export type DecoroMessage = ChatMessage;
 
 type Options = {
   /**
@@ -255,14 +258,18 @@ export const useDecoroChat = ({
   }, [eventsApi, ensureTurnContext, conversationIdRef.current]);
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, attachments?: ImageAttachment[]) => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      // An attached image with empty text is still a valid turn
+      // ("here's a screenshot, do something with it"). Only short-
+      // circuit when both are empty.
+      if (!trimmed && (!attachments || attachments.length === 0)) return;
 
       const userMsg: DecoroMessage = {
         id: crypto.randomUUID(),
         role: 'user',
         text: trimmed,
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
       };
       const assistantId = crypto.randomUUID();
       setState((prev) => ({
