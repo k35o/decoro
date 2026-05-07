@@ -11,6 +11,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 
 import { createSubprocessClaude } from './subprocess-claude.ts';
+import { createSubprocessCodex } from './subprocess-codex.ts';
 
 /**
  * LLM configuration consumed by `createModel`. Discriminated union so
@@ -28,14 +29,27 @@ import { createSubprocessClaude } from './subprocess-claude.ts';
  *   - `subprocess-claude`: shells out to the locally installed `claude`
  *     CLI and adapts its `--print --output-format stream-json` output.
  *     Lets you monkey-test against your Claude subscription with no
- *     per-token API charges. Process spawn overhead (~1.5s/turn) makes
- *     this unfit for tests / CI; use the API-backed providers there.
+ *     per-token API charges. Text-only — vision turns currently fall
+ *     through with the image stripped. Process spawn overhead
+ *     (~1.5s/turn) makes this unfit for tests / CI.
+ *   - `subprocess-codex`: shells out to `codex app-server` and adapts
+ *     its JSON-RPC over stdio protocol. Same shape as
+ *     `subprocess-claude` (subscription-backed, no API key) but
+ *     **vision-capable** via codex's `localImage` content type — the
+ *     only local provider that can see Decoro's image attachments.
+ *     Uses gpt-5 family models on the operator's ChatGPT subscription.
  */
 export type LlmConfig =
   | { provider: 'anthropic'; model: string; apiKey?: string }
   | { provider: 'google'; model: string; apiKey?: string }
   | { provider: 'gateway'; model: string; apiKey?: string }
-  | { provider: 'subprocess-claude'; model: string; command?: string };
+  | { provider: 'subprocess-claude'; model: string; command?: string }
+  | {
+      provider: 'subprocess-codex';
+      model: string;
+      command?: string;
+      turnTimeoutMs?: number;
+    };
 
 /**
  * Resolve a config into an AI SDK model instance. Server-side only — never
@@ -58,6 +72,12 @@ export const createModel = (config: LlmConfig): LanguageModel => {
     }
     case 'subprocess-claude': {
       return createSubprocessClaude(config.model, { command: config.command });
+    }
+    case 'subprocess-codex': {
+      return createSubprocessCodex(config.model, {
+        command: config.command,
+        turnTimeoutMs: config.turnTimeoutMs,
+      });
     }
     default: {
       // Exhaustiveness guard. Adding a new provider must also add a case.
