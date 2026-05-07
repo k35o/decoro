@@ -6,7 +6,7 @@ import {
   CloseIcon,
   IconButton,
   InteractiveCard,
-  PaletteIcon,
+  PlusIcon,
   SendIcon,
   SparklesIcon,
   Spinner,
@@ -249,45 +249,44 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
             aria-label="Prompt"
             className="border-border-base bg-bg-base focus-visible:ring-border-info disabled:bg-bg-mute flex-1 resize-none rounded-xl border px-3 py-2 text-sm focus-visible:border-transparent focus-visible:ring-2 focus-visible:outline-hidden disabled:cursor-not-allowed"
           />
-          <div className="flex flex-col gap-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(e) => {
-                const files = e.target.files ? Array.from(e.target.files) : [];
-                if (files.length > 0) {
-                  void ingestFiles(files);
-                }
-                e.target.value = '';
-              }}
-            />
-            <IconButton
-              label="Attach image"
-              size="md"
-              bg="base"
-              onAction={() => {
-                fileInputRef.current?.click();
-              }}
-            >
-              <PaletteIcon size="sm" />
-            </IconButton>
-            <Button
-              type="submit"
-              disabled={
-                isStreaming || (!prompt.trim() && attachments.length === 0)
-              }
-              startIcon={<SendIcon size="sm" />}
-            >
-              Send
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={
+              isStreaming || (!prompt.trim() && attachments.length === 0)
+            }
+            startIcon={<SendIcon size="sm" />}
+          >
+            Send
+          </Button>
         </div>
-        <p className="text-fg-subtle mt-2 text-xs">
-          ⌘ + Enter to send · paste / drop / attach images
-        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          onChange={(e) => {
+            const files = e.target.files ? Array.from(e.target.files) : [];
+            if (files.length > 0) {
+              void ingestFiles(files);
+            }
+            e.target.value = '';
+          }}
+        />
+        <div className="text-fg-subtle mt-2 flex items-center justify-between gap-2 text-xs">
+          <button
+            type="button"
+            disabled={isStreaming || remainingSlots <= 0}
+            onClick={() => {
+              fileInputRef.current?.click();
+            }}
+            className="text-fg-mute hover:text-fg-base disabled:text-fg-subtle inline-flex items-center gap-1 disabled:cursor-not-allowed"
+          >
+            <PlusIcon size="sm" />
+            <span>Attach image</span>
+          </button>
+          <span>⌘ + Enter to send · or paste / drop</span>
+        </div>
       </form>
     </div>
   );
