@@ -303,6 +303,7 @@ const createCodexStream = (
             imagePathsToCleanup,
           );
 
+          let streamedText = '';
           const handleMessage = (msg: JsonRpcMessage) => {
             // Streaming text — our primary signal.
             if (
@@ -313,11 +314,50 @@ const createCodexStream = (
                 controller.enqueue({ type: 'text-start', id: textBlockId });
                 textStarted = true;
               }
+              const { delta } = msg.params as { delta: string };
               controller.enqueue({
                 type: 'text-delta',
                 id: textBlockId,
-                delta: msg.params['delta'],
+                delta,
               });
+              streamedText += delta;
+              return;
+            }
+            // Fallback for responses codex flushes as a single
+            // `item/completed` with `type: 'agentMessage'` instead of
+            // streaming via deltas. Short replies and some reasoning
+            // configurations land here without ever emitting a delta.
+            // The completed item carries the FULL text; emit whatever
+            // gap exists between the deltas we saw and the canonical
+            // text so downstream gets the complete assistant message.
+            if (msg.method === 'item/completed') {
+              const item = msg.params?.['item'] as
+                | { type?: string; text?: string }
+                | undefined;
+              if (
+                item?.type === 'agentMessage' &&
+                typeof item.text === 'string' &&
+                item.text !== ''
+              ) {
+                const remainder = item.text.startsWith(streamedText)
+                  ? item.text.slice(streamedText.length)
+                  : item.text;
+                if (remainder !== '') {
+                  if (!textStarted) {
+                    controller.enqueue({
+                      type: 'text-start',
+                      id: textBlockId,
+                    });
+                    textStarted = true;
+                  }
+                  controller.enqueue({
+                    type: 'text-delta',
+                    id: textBlockId,
+                    delta: remainder,
+                  });
+                  streamedText = item.text;
+                }
+              }
               return;
             }
             // Turn finished — tear down.
