@@ -297,7 +297,11 @@ const MessageAttachments = ({
 }: {
   attachments: ImageAttachment[];
 }) => (
-  <ul className="flex flex-wrap gap-1.5" aria-label="Image attachments">
+  <ul
+    className="flex flex-wrap gap-1.5"
+    style={{ listStyle: 'none', padding: 0, margin: 0 }}
+    aria-label="Image attachments"
+  >
     {attachments.map((a) => (
       <li key={a.id}>
         <a
@@ -311,7 +315,15 @@ const MessageAttachments = ({
           <img
             src={a.dataUri}
             alt=""
-            className="size-24 rounded-md object-cover"
+            width={96}
+            height={96}
+            style={{
+              width: 96,
+              height: 96,
+              objectFit: 'cover',
+              borderRadius: 6,
+              display: 'block',
+            }}
           />
         </a>
       </li>
