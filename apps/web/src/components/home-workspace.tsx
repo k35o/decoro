@@ -57,8 +57,8 @@ export const HomeWorkspace = ({ seed, onConversationCreated }: Props) => {
           messages={chatMessages}
           isStreaming={isStreaming}
           error={error}
-          onSubmit={(prompt) => {
-            void send(prompt);
+          onSubmit={(prompt, attachments) => {
+            void send(prompt, attachments);
           }}
         />
       </section>

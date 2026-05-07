@@ -77,21 +77,51 @@ export const ShareView = ({ snapshot }: Props) => {
             className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4"
             aria-label="Conversation transcript"
           >
-            {snapshot.messages.map((msg) =>
-              msg.role === 'user' ? (
-                <li key={msg.id} className="flex justify-end">
-                  <div className="bg-primary-bg-mute text-fg-base max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
-                    {msg.text}
-                  </div>
-                </li>
-              ) : msg.text === '' ? null : (
+            {snapshot.messages.map((msg) => {
+              const attachments = msg.attachments ?? [];
+              if (msg.role === 'user') {
+                return (
+                  <li key={msg.id} className="flex justify-end">
+                    <div className="bg-primary-bg-mute text-fg-base flex max-w-[85%] flex-col gap-2 rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
+                      {attachments.length > 0 ? (
+                        <ul
+                          className="flex flex-wrap gap-1.5"
+                          aria-label="Image attachments"
+                        >
+                          {attachments.map((a) => (
+                            <li key={a.id}>
+                              <a
+                                href={a.dataUri}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block"
+                                aria-label="Open image in new tab"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element -- data URI, no remote optimization */}
+                                <img
+                                  src={a.dataUri}
+                                  alt=""
+                                  className="size-24 rounded-md object-cover"
+                                />
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {msg.text === '' ? null : <span>{msg.text}</span>}
+                    </div>
+                  </li>
+                );
+              }
+              if (msg.text === '') return null;
+              return (
                 <li key={msg.id} className="flex justify-start">
                   <div className="bg-bg-subtle text-fg-base max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-2 text-sm">
                     {msg.text}
                   </div>
                 </li>
-              ),
-            )}
+              );
+            })}
           </ul>
           <p className="text-fg-subtle border-border-subtle border-t px-5 py-3 text-xs">
             Captured{' '}

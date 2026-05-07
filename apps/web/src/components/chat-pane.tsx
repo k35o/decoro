@@ -3,21 +3,33 @@
 import {
   Alert,
   Button,
+  CloseIcon,
+  IconButton,
   InteractiveCard,
+  PaletteIcon,
   SendIcon,
   SparklesIcon,
   Spinner,
 } from '@k8o/arte-odyssey';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { adapter } from '../../decoro.config.ts';
-import type { ChatMessage } from '../lib/chat-types.ts';
+import {
+  type ChatMessage,
+  type ImageAttachment,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+} from '../lib/chat-types.ts';
+import {
+  AttachmentTooLargeError,
+  UnsupportedAttachmentTypeError,
+  compressAll,
+} from '../lib/image-compress.ts';
 
 type Props = {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: Error | null;
-  onSubmit: (prompt: string) => void;
+  onSubmit: (prompt: string, attachments?: ImageAttachment[]) => void;
 };
 
 const EXAMPLE_PROMPTS = [
@@ -27,21 +39,78 @@ const EXAMPLE_PROMPTS = [
   'A pricing card with a "Recommended" badge',
 ];
 
+const filesFromDataTransfer = (
+  items: DataTransferItemList | null,
+  files: FileList | null,
+): File[] => {
+  const out: File[] = [];
+  if (items) {
+    for (const item of Array.from(items)) {
+      if (item.kind !== 'file') continue;
+      const file = item.getAsFile();
+      if (file === null) continue;
+      if (file.type.startsWith('image/')) out.push(file);
+    }
+  }
+  if (out.length === 0 && files) {
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) out.push(file);
+    }
+  }
+  return out;
+};
+
 /**
- * Left-pane chat input + transcript. Messages come straight from `useChatUI`
- * upstream — assistant entries currently have empty `text` because our prompt
- * tells the LLM to emit only JSONL patches (the spec, rendered in the iframe,
- * is the assistant's "answer").
+ * Left-pane chat input + transcript. Owns the in-flight compose state
+ * (prompt text + pending attachments) and forwards completed turns
+ * upstream via `onSubmit`. Image input arrives three ways: paste from
+ * clipboard, drag-and-drop onto the textarea, and a file picker
+ * button. All three funnel through `compressAll` so the data URI ends
+ * up under the conversation row size budget.
  */
 export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
   const [prompt, setPrompt] = useState('');
+  const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
+  const [composeError, setComposeError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isEmpty = messages.length === 0;
+  const remainingSlots = MAX_ATTACHMENTS_PER_MESSAGE - attachments.length;
+
+  const ingestFiles = async (files: readonly File[]) => {
+    if (files.length === 0) return;
+    if (remainingSlots <= 0) {
+      setComposeError(
+        `Up to ${MAX_ATTACHMENTS_PER_MESSAGE.toString()} images per message.`,
+      );
+      return;
+    }
+    const accepted = files.slice(0, remainingSlots);
+    setComposeError(null);
+    try {
+      const next = await compressAll(accepted);
+      setAttachments((prev) => [...prev, ...next]);
+    } catch (err) {
+      if (
+        err instanceof AttachmentTooLargeError ||
+        err instanceof UnsupportedAttachmentTypeError
+      ) {
+        setComposeError(err.message);
+      } else {
+        setComposeError(
+          err instanceof Error ? err.message : 'Failed to read image',
+        );
+      }
+    }
+  };
 
   const submit = () => {
     const trimmed = prompt.trim();
-    if (!trimmed || isStreaming) return;
+    if (isStreaming) return;
+    if (!trimmed && attachments.length === 0) return;
+    onSubmit(trimmed, attachments.length === 0 ? undefined : attachments);
     setPrompt('');
-    onSubmit(trimmed);
+    setAttachments([]);
+    setComposeError(null);
   };
 
   return (
@@ -64,8 +133,11 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
             {messages.map((msg) =>
               msg.role === 'user' ? (
                 <li key={msg.id} className="flex justify-end">
-                  <div className="bg-primary-bg-mute text-fg-base max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
-                    {msg.text}
+                  <div className="bg-primary-bg-mute text-fg-base flex max-w-[85%] flex-col gap-2 rounded-2xl rounded-tr-sm px-4 py-2 text-sm">
+                    {msg.attachments && msg.attachments.length > 0 ? (
+                      <MessageAttachments attachments={msg.attachments} />
+                    ) : null}
+                    {msg.text === '' ? null : <span>{msg.text}</span>}
                   </div>
                 </li>
               ) : (
@@ -103,11 +175,67 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
         }}
         className="border-border-subtle border-t px-5 py-4"
       >
+        {attachments.length > 0 ? (
+          <ul className="mb-2 flex flex-wrap gap-2" aria-label="Attachments">
+            {attachments.map((a) => (
+              <li key={a.id} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- data URI, no remote optimization */}
+                <img
+                  src={a.dataUri}
+                  alt=""
+                  className="border-border-subtle size-16 rounded-md border object-cover"
+                />
+                <span className="absolute -top-2 -right-2">
+                  <IconButton
+                    label="Remove attachment"
+                    size="sm"
+                    bg="base"
+                    onAction={() => {
+                      setAttachments((prev) =>
+                        prev.filter((p) => p.id !== a.id),
+                      );
+                    }}
+                  >
+                    <CloseIcon size="sm" />
+                  </IconButton>
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {composeError === null || composeError === '' ? null : (
+          <p className="text-fg-mute mb-2 text-xs" role="alert">
+            {composeError}
+          </p>
+        )}
         <div className="flex items-end gap-2">
           <textarea
             value={prompt}
             onChange={(e) => {
               setPrompt(e.target.value);
+            }}
+            onPaste={(e) => {
+              const files = filesFromDataTransfer(
+                e.clipboardData.items,
+                e.clipboardData.files,
+              );
+              if (files.length > 0) {
+                e.preventDefault();
+                void ingestFiles(files);
+              }
+            }}
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes('Files')) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              const files = filesFromDataTransfer(
+                e.dataTransfer.items,
+                e.dataTransfer.files,
+              );
+              if (files.length > 0) {
+                e.preventDefault();
+                void ingestFiles(files);
+              }
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -121,19 +249,76 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
             aria-label="Prompt"
             className="border-border-base bg-bg-base focus-visible:ring-border-info disabled:bg-bg-mute flex-1 resize-none rounded-xl border px-3 py-2 text-sm focus-visible:border-transparent focus-visible:ring-2 focus-visible:outline-hidden disabled:cursor-not-allowed"
           />
-          <Button
-            type="submit"
-            disabled={isStreaming || !prompt.trim()}
-            startIcon={<SendIcon size="sm" />}
-          >
-            Send
-          </Button>
+          <div className="flex flex-col gap-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                const files = e.target.files ? Array.from(e.target.files) : [];
+                if (files.length > 0) {
+                  void ingestFiles(files);
+                }
+                e.target.value = '';
+              }}
+            />
+            <IconButton
+              label="Attach image"
+              size="md"
+              bg="base"
+              onAction={() => {
+                fileInputRef.current?.click();
+              }}
+            >
+              <PaletteIcon size="sm" />
+            </IconButton>
+            <Button
+              type="submit"
+              disabled={
+                isStreaming || (!prompt.trim() && attachments.length === 0)
+              }
+              startIcon={<SendIcon size="sm" />}
+            >
+              Send
+            </Button>
+          </div>
         </div>
-        <p className="text-fg-subtle mt-2 text-xs">⌘ + Enter to send</p>
+        <p className="text-fg-subtle mt-2 text-xs">
+          ⌘ + Enter to send · paste / drop / attach images
+        </p>
       </form>
     </div>
   );
 };
+
+const MessageAttachments = ({
+  attachments,
+}: {
+  attachments: ImageAttachment[];
+}) => (
+  <ul className="flex flex-wrap gap-1.5" aria-label="Image attachments">
+    {attachments.map((a) => (
+      <li key={a.id}>
+        <a
+          href={a.dataUri}
+          target="_blank"
+          rel="noreferrer"
+          className="block"
+          aria-label="Open image in new tab"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- data URI, no remote optimization */}
+          <img
+            src={a.dataUri}
+            alt=""
+            className="size-24 rounded-md object-cover"
+          />
+        </a>
+      </li>
+    ))}
+  </ul>
+);
 
 const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
   <div className="flex h-full flex-col gap-4">
