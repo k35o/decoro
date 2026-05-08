@@ -222,6 +222,30 @@ export const startGenerateJob = (params: {
         job.appendChunk(chunk);
       }
 
+      // Surface provider-level errors that didn't throw on the
+      // textStream but flipped the finish reason. Subscription rate
+      // limits, content filters, and provider 5xxs all land here. We
+      // only know the model "stopped because of an error" — the
+      // detailed message lives in `result.warnings` or got logged
+      // earlier by the provider itself, not surfaced via a thrown
+      // exception.
+      const finishReason = await result.finishReason;
+      if (finishReason === 'error') {
+        const warnings = await result.warnings;
+        const detail = warnings
+          ?.map((w) =>
+            'message' in w ? (w as { message?: string }).message : undefined,
+          )
+          .filter((m): m is string => typeof m === 'string' && m !== '')
+          .join('; ');
+        job.fail(
+          detail !== undefined && detail !== ''
+            ? detail
+            : 'The model stopped with an error. Check the server logs for the underlying provider message (rate limit, content filter, etc.).',
+        );
+        return;
+      }
+
       // Parse the full buffer to compute the final assistant text + spec
       // for the DB write. Same parser the client uses, so both sides
       // stay byte-for-byte consistent.
