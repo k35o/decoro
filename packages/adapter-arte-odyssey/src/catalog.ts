@@ -319,4 +319,5 @@ export type ModalProps = z.infer<typeof modalProps>;
 export type PaginationProps = z.infer<typeof paginationProps>;
 export type IconProps = z.infer<typeof iconProps>;
 export type IconButtonProps = z.infer<typeof iconButtonProps>;
+export type LinkButtonProps = z.infer<typeof linkButtonProps>;
 export type TextProps = z.infer<typeof textProps>;

@@ -305,6 +305,24 @@ const createCodexStream = (
 
           let streamedText = '';
           const handleMessage = (msg: JsonRpcMessage) => {
+            // TEMP debug — log every non-noisy notification so we can
+            // see which protocol events surface for a given prompt.
+            if (
+              msg.method !== undefined &&
+              !msg.method.includes('mcpServer') &&
+              !msg.method.includes('agentMessage/delta') &&
+              !msg.method.includes('rateLimits') &&
+              !msg.method.includes('tokenUsage')
+            ) {
+              const itemType = (
+                msg.params?.['item'] as { type?: string } | undefined
+              )?.type;
+              const suffix =
+                itemType === undefined || itemType === ''
+                  ? ''
+                  : ` (${itemType})`;
+              console.warn(`[codex] ${msg.method}${suffix}`);
+            }
             // Streaming text — our primary signal.
             if (
               msg.method === 'item/agentMessage/delta' &&

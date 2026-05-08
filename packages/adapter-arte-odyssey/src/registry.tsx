@@ -10,6 +10,7 @@ import {
   Drawer,
   FormControl,
   IconButton,
+  LinkButton,
   Modal,
   Pagination,
 } from '@k8o/arte-odyssey';
@@ -24,6 +25,7 @@ import type {
   IconButtonProps,
   IconProps,
   LayoutElementProps,
+  LinkButtonProps,
   ModalProps,
   PaginationProps,
   TextProps,
@@ -159,6 +161,65 @@ const IconRenderer = ({ element }: ComponentRenderProps<IconProps>) => {
   return <Component size={size ?? undefined} />;
 };
 
+/**
+ * Resolve a string icon name (e.g. `"HistoryIcon"`) into an actual
+ * ArteOdyssey icon React element. Used by renderers whose React
+ * component takes a `ReactNode` slot for an icon while the catalog
+ * Zod schema models the prop as the icon-name enum (so the AI picks
+ * a valid name). Returns `undefined` for null / missing / unknown
+ * names so the wrapped component falls back to its no-icon
+ * appearance instead of rendering broken text.
+ *
+ * Mirrors the codegen-side `splitIconProps` helper in
+ * `codegen-shared.ts` — both sides need to convert
+ * "string in spec" → "<IconName /> in real React" or the preview
+ * shows "ChevronIcon" as literal text next to the button label.
+ */
+const resolveIconNode = (
+  name: string | null | undefined,
+): React.ReactElement | undefined => {
+  if (name === null || name === undefined || name === '') return undefined;
+  const Component = (arteOdyssey as Record<string, unknown>)[name] as
+    | ComponentType<{ size?: 'sm' | 'md' | 'lg' }>
+    | undefined;
+  if (!Component) return undefined;
+  return <Component size="sm" />;
+};
+
+const LinkButtonRenderer = ({
+  element,
+  children,
+}: ComponentRenderProps<LinkButtonProps>) => {
+  const {
+    variant,
+    size,
+    color,
+    href,
+    startIcon,
+    endIcon,
+    active,
+    openInNewTab,
+  } = element.props;
+  // ArteOdyssey's LinkButton types `children` as `string`. The
+  // Renderer hands us ReactNode[] (the spec's `Text` child has
+  // already been rendered into JSX). Cast through a fragment so the
+  // node tree reaches the component without a type fight.
+  return (
+    <LinkButton
+      href={href}
+      variant={variant ?? undefined}
+      size={size ?? undefined}
+      color={color ?? undefined}
+      startIcon={resolveIconNode(startIcon)}
+      endIcon={resolveIconNode(endIcon)}
+      active={active ?? undefined}
+      openInNewTab={openInNewTab ?? undefined}
+    >
+      {children as unknown as string}
+    </LinkButton>
+  );
+};
+
 const IconButtonRenderer = ({
   element,
   children,
@@ -225,6 +286,7 @@ export const registry: ComponentRegistry = {
   Pagination: PaginationRenderer,
   Icon: IconRenderer,
   IconButton: IconButtonRenderer,
+  LinkButton: LinkButtonRenderer,
   Text: TextRenderer,
   div: layoutElementRenderer('div'),
   section: layoutElementRenderer('section'),
