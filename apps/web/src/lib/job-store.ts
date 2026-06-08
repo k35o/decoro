@@ -174,7 +174,10 @@ export const subscribe = (
     };
   }
   if (job.buffer.length > 0) {
-    subscriber({ type: 'chunk', turnId: job.turnId, text: job.buffer });
+    // Full-buffer replay → `sync` (not `chunk`): the client rebuilds the
+    // turn from scratch, so this is idempotent across reconnects. A bare
+    // `chunk` here would get appended once per (re)connection.
+    subscriber({ type: 'sync', turnId: job.turnId, text: job.buffer });
   }
   if (job.status === 'done') {
     subscriber({ type: 'done', turnId: job.turnId });
