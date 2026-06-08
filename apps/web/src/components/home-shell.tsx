@@ -79,7 +79,7 @@ export const HomeShell = ({ tagline }: Props) => {
         const res = await fetch(`/api/conversations/${conversationParam}`);
         if (!res.ok) return;
         const record = (await res.json()) as ConversationRecord;
-        // oxlint-disable-next-line typescript-eslint(no-unnecessary-condition)
+        // oxlint-disable-next-line typescript/no-unnecessary-condition
         if (cancelled) return;
         setSeed({
           key: `convo-${conversationParam}`,
@@ -114,7 +114,7 @@ export const HomeShell = ({ tagline }: Props) => {
         const res = await fetch(`/api/share/${fromShareId}`);
         if (!res.ok) return;
         const snapshot = (await res.json()) as SnapshotRecord;
-        // oxlint-disable-next-line typescript-eslint(no-unnecessary-condition)
+        // oxlint-disable-next-line typescript/no-unnecessary-condition
         if (cancelled) return;
         setSeed({
           key: `from-share-${fromShareId}`,

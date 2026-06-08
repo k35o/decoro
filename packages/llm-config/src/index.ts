@@ -3,7 +3,7 @@
 // API keys from `process.env` here; an accidental import from a client
 // component would compile that env access into the browser bundle and leak
 // the key.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGateway } from '@ai-sdk/gateway';

@@ -1,7 +1,7 @@
 // `server-only` is a side-effect import that makes the bundler refuse
 // to include this module in client code. The job calls `streamText`
 // with server credentials and writes to the DB.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import { createModel } from '@decoro/llm-config';
 import {
@@ -17,18 +17,14 @@ import type { ChatMessage } from './chat-types.ts';
 import { updateConversation } from './conversation-store.ts';
 import { startJob } from './job-store.ts';
 
-// Ask the model to prefix the JSONL stream with a single short natural-
-// language line summarizing what it's building.
-const responsePreambleInstruction = [
-  'Response format (STRICT — the chat UI parses prose vs JSON by line):',
-  '- Line 1: exactly ONE short sentence (≤ 15 words) describing what you are building or changing in this turn. Plain prose, no JSON, no leading whitespace.',
-  '- Line 1 MUST end with a literal newline character before any JSON appears. Do not place JSON on the same line as the sentence.',
-  '- Lines 2+: JSONL patch lines, one complete JSON object per line. No prose between or after the patches.',
-  '- Example shape:',
-  '    Adding a primary submit button.\\n',
-  '    {"op":"add","path":"/elements/btn","value":{"type":"Button","props":{"label":"Save"},"children":[]}}\\n',
-  '    {"op":"replace","path":"/root","value":"btn"}\\n',
-].join('\n');
+// json-render's `inline` mode already prescribes the wire format ("a brief
+// explanation, then JSONL patches in a ```spec fence") and
+// `createMixedStreamParser` (server + client) parses it. We only narrow the
+// explanation to one sentence so the chat bubble / sidebar title stay tidy.
+// Do NOT re-introduce a competing "no prose / one prose line" format rule:
+// pairing that with the catalog prompt made the model loop on the summary.
+const summaryInstruction =
+  'Keep the leading explanation to a single concise sentence before the ```spec block.';
 
 // Universal spec discipline — applies to every adapter; it's a json-render
 // spec / catalog contract concern, not a design-system one.
@@ -51,7 +47,7 @@ const mockupFirstInstruction = [
 ].join('\n');
 
 const systemPrompt = [
-  adapter.catalog.prompt({ mode: 'standalone' }),
+  adapter.catalog.prompt({ mode: 'inline' }),
   '',
   'Library design principles:',
   adapter.metadata.designPrinciples,
@@ -63,11 +59,8 @@ const systemPrompt = [
   '',
   mockupFirstInstruction,
   '',
-  responsePreambleInstruction,
+  summaryInstruction,
 ].join('\n');
-
-const isMeaningfulSpec = (spec: Spec): boolean =>
-  spec.root !== '' && Object.keys(spec.elements).length > 0;
 
 const buildLlmMessages = (
   messages: ChatMessage[],
@@ -86,7 +79,10 @@ const buildLlmMessages = (
     ...last,
     content: buildUserPrompt({
       prompt: last.content,
-      currentSpec: isMeaningfulSpec(inputSpec) ? inputSpec : undefined,
+      // `buildUserPrompt` guards `currentSpec` with json-render's own
+      // `isNonEmptySpec`, so pass the seed straight through — one definition
+      // of "empty spec", owned by the library.
+      currentSpec: inputSpec,
     }),
   };
   return llmMessages;

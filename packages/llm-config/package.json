@@ -12,11 +12,11 @@
     "check:write": "vp check --fix"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "3.0.71",
-    "@ai-sdk/gateway": "3.0.104",
-    "@ai-sdk/google": "3.0.64",
-    "@ai-sdk/provider": "3.0.8",
-    "ai": "6.0.168",
+    "@ai-sdk/anthropic": "3.0.81",
+    "@ai-sdk/gateway": "3.0.125",
+    "@ai-sdk/google": "3.0.80",
+    "@ai-sdk/provider": "3.0.10",
+    "ai": "6.0.197",
     "server-only": "0.0.1"
   }
 }

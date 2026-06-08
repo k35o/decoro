@@ -123,32 +123,58 @@ export const useDecoroChat = ({
   const turnRef = useRef<{
     turnId: string | null;
     assistantId: string | null;
+    // The spec as it was BEFORE this turn — re-seed point when a `sync`
+    // re-delivers the full buffer so patches re-apply once, not on top of
+    // a half-built spec.
+    baseline: Spec;
     working: Spec;
     parser: ReturnType<typeof createMixedStreamParser> | null;
   }>({
     turnId: null,
     assistantId: null,
+    baseline: buildEmptySpec(),
     working: buildEmptySpec(),
     parser: null,
   });
 
-  const ensureTurnContext = useCallback((turnId: string) => {
+  /**
+   * Build (or, when `forceReset`, rebuild) the parsing context for `turnId`.
+   *
+   * - Live `chunk`: call with `forceReset = false` — reuses the existing
+   *   parser/message so deltas append.
+   * - Full-buffer `sync` (a (re)connecting subscriber): call with
+   *   `forceReset = true` — clears the turn's assistant message + re-seeds
+   *   the working spec from the pre-turn baseline, then the caller re-pushes
+   *   the whole buffer. This makes reconnects idempotent: the chat text and
+   *   spec rebuild from scratch instead of the buffer being appended again.
+   */
+  const ensureTurn = useCallback((turnId: string, forceReset: boolean) => {
     const existing = turnRef.current;
-    if (existing.turnId === turnId && existing.parser) return;
-    // New turn (or first chunk for this connection). Build an empty
-    // assistant placeholder if one isn't already present, and reset
-    // the parser around a fresh working spec seeded from current state.
-    let assistantId: string | null = null;
+    const sameTurn = existing.turnId === turnId;
+    if (sameTurn && existing.parser && !forceReset) return;
+    // Capture the pre-turn baseline once per turn; keep it across resets.
+    const baseline = sameTurn ? existing.baseline : cloneSpec(specRef.current);
+    let assistantId = sameTurn ? existing.assistantId : null;
     setState((prev) => {
-      // Re-use the trailing empty assistant placeholder if the user's
-      // own send() already inserted one in this same browser tab.
+      if (assistantId !== null) {
+        // Reuse this turn's bubble; clear it so a re-sync re-parses cleanly.
+        return {
+          ...prev,
+          messages: prev.messages.map((m) =>
+            m.id === assistantId ? { ...m, text: '' } : m,
+          ),
+          isStreaming: true,
+          error: null,
+        };
+      }
+      // Re-use the trailing empty assistant placeholder if the user's own
+      // send() already inserted one in this tab; otherwise (attaching to a
+      // server-side job from another tab / after refresh) insert our own.
       const last = prev.messages.at(-1);
       if (last?.role === 'assistant' && last.text === '') {
         assistantId = last.id;
-        return prev;
+        return { ...prev, isStreaming: true, error: null };
       }
-      // Otherwise this stream came from another tab / a server-side
-      // job we're just attaching to. Insert a placeholder of our own.
       const id = crypto.randomUUID();
       assistantId = id;
       return {
@@ -158,7 +184,7 @@ export const useDecoroChat = ({
         error: null,
       };
     });
-    const working = cloneSpec(specRef.current);
+    const working = cloneSpec(baseline);
     const parser = createMixedStreamParser({
       onText(chunk) {
         const id = assistantId;
@@ -178,7 +204,7 @@ export const useDecoroChat = ({
         }));
       },
     });
-    turnRef.current = { turnId, assistantId, working, parser };
+    turnRef.current = { turnId, assistantId, baseline, working, parser };
   }, []);
 
   // EventSource lifecycle. Re-subscribe whenever the conversation id
@@ -204,18 +230,28 @@ export const useDecoroChat = ({
         return;
       }
       if (event.type === 'start') {
-        // Fresh turn started server-side. Reset our parser for it.
+        // Fresh turn started server-side. Mark it + snapshot the pre-turn
+        // baseline; the placeholder + parser are built lazily on the first
+        // `sync` / `chunk` for the turn.
         turnRef.current = {
           turnId: event.turnId,
           assistantId: null,
+          baseline: cloneSpec(specRef.current),
           working: buildEmptySpec(),
           parser: null,
         };
         setState((prev) => ({ ...prev, isStreaming: true, error: null }));
         return;
       }
+      if (event.type === 'sync') {
+        // Full-buffer replay for a (re)connecting subscriber: rebuild the
+        // turn from scratch so reconnects don't duplicate the text / spec.
+        ensureTurn(event.turnId, true);
+        turnRef.current.parser?.push(event.text);
+        return;
+      }
       if (event.type === 'chunk') {
-        ensureTurnContext(event.turnId);
+        ensureTurn(event.turnId, false);
         turnRef.current.parser?.push(event.text);
         return;
       }
@@ -252,7 +288,7 @@ export const useDecoroChat = ({
     // below — but the cleanest is to re-run when the active id changes.
     // Read it from the ref so a value change forces a re-effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- ref read is intentional
-  }, [eventsApi, ensureTurnContext, conversationIdRef.current]);
+  }, [eventsApi, ensureTurn, conversationIdRef.current]);
 
   const send = useCallback(
     async (text: string) => {
@@ -328,6 +364,7 @@ export const useDecoroChat = ({
     turnRef.current = {
       turnId: null,
       assistantId: null,
+      baseline: buildEmptySpec(),
       working: buildEmptySpec(),
       parser: null,
     };

@@ -1,11 +1,25 @@
 'use client';
 
+import { renderViaJsonRender } from '@decoro/adapter-spec';
 import type { Spec } from '@json-render/core';
 import { Button, CopyIcon, SparklesIcon } from '@k8o/arte-odyssey';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { codeToHtml } from 'shiki';
 
 import { adapter } from '../../decoro.config.ts';
+
+/**
+ * Resolve the spec → TSX exporter. An adapter MAY ship a native-TSX
+ * `codeOutput`; when it doesn't, fall back to Decoro's library-agnostic
+ * exporter, which emits a `<Renderer>` wrapper that re-uses the adapter's
+ * own json-render registry. ArteOdyssey uses the fallback.
+ */
+const generateCode = (spec: Spec): string => {
+  const { codeOutput, registryModule } = adapter;
+  return codeOutput
+    ? codeOutput.generate(spec)
+    : renderViaJsonRender(spec, registryModule);
+};
 
 type Props = {
   spec: Spec | null;
@@ -33,7 +47,7 @@ export const CodePanel = ({ spec }: Props) => {
   const code = useMemo<CodeState>(() => {
     if (spec === null) return { kind: 'empty' };
     try {
-      const value = adapter.codeOutput.generate(spec);
+      const value = generateCode(spec);
       return value === '' ? { kind: 'empty' } : { kind: 'ok', value };
     } catch (err) {
       return {
@@ -125,7 +139,7 @@ export const CodePanel = ({ spec }: Props) => {
       <div className="absolute top-3 right-3 z-10">
         <Button
           size="sm"
-          variant="outlined"
+          variant="outline"
           color="gray"
           onAction={onCopy}
           startIcon={<CopyIcon size="sm" />}
@@ -141,7 +155,7 @@ export const CodePanel = ({ spec }: Props) => {
       */}
       <div
         className="text-sm [&_pre]:overflow-auto [&_pre]:p-6"
-        // oxlint-disable-next-line eslint(react/no-danger)
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>

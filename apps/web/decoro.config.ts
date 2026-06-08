@@ -1,4 +1,6 @@
 import { arteOdysseyAdapter } from '@decoro/adapter-arte-odyssey';
+import type { Adapter } from '@decoro/adapter-spec';
+import { findUncoveredComponents } from '@decoro/adapter-spec';
 import type { LlmConfig } from '@decoro/llm-config';
 
 /**
@@ -59,12 +61,27 @@ export const llm: LlmConfig = {
  * contract from `@decoro/adapter-spec`, then swap the import / export
  * below. No other code in `apps/web` needs to change.
  */
-// Typed as `typeof arteOdysseyAdapter` (not the bare `Adapter` interface)
-// so the registry's component type stays narrow — `Adapter` defaults
-// `TComponent` to `unknown`, which json-render's `ComponentRegistry`
-// would then refuse. Concrete adapter exports preserve the right
-// specialization.
-export const adapter = arteOdysseyAdapter;
+// Annotated `Adapter<typeof arteOdysseyAdapter.registry>` so the type carries
+// BOTH the precise registry (required by `<Renderer>` / `<JSONUIProvider>` in
+// the preview) AND the optional `codeOutput` field — letting `code-panel`
+// read `adapter.codeOutput` without a cast. The concrete adapter is declared
+// with `satisfies Adapter`, so it still conforms to the contract.
+export const adapter: Adapter<typeof arteOdysseyAdapter.registry> =
+  arteOdysseyAdapter;
+
+// Dev-only guardrail for the "any library just works" path: warn if the bound
+// adapter's catalog exposes a component the registry can't render (it would
+// show as an empty slot at generation time). Client + dev only — the check
+// reads the live registry's keys, which on the server are a Next
+// client-reference (no real keys), so it runs in the browser where they exist.
+if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+  const uncovered = findUncoveredComponents(adapter.catalog, adapter.registry);
+  if (uncovered.length > 0) {
+    console.warn(
+      `[decoro] adapter "${adapter.metadata.name}" has catalog components with no registry renderer: ${uncovered.join(', ')}. They will render as empty slots.`,
+    );
+  }
+}
 
 /**
  * Share-snapshot configuration.

@@ -40,7 +40,7 @@ export const usePreviewBroadcast = (spec: Spec | null) => {
       };
       // BroadcastChannel.postMessage takes only the message; the
       // targetOrigin arg the lint rule wants is for window.postMessage.
-      // oxlint-disable-next-line eslint-plugin-unicorn(require-post-message-target-origin)
+      // oxlint-disable-next-line unicorn/require-post-message-target-origin
       channel.postMessage(message);
     };
     channel.addEventListener('message', handler);
@@ -55,7 +55,7 @@ export const usePreviewBroadcast = (spec: Spec | null) => {
     const channel = new BroadcastChannel(PREVIEW_CHANNEL);
     const message: PreviewSpecMessage = { type: 'decoro:spec', spec };
     // BroadcastChannel.postMessage takes only the message; see comment above.
-    // oxlint-disable-next-line eslint-plugin-unicorn(require-post-message-target-origin)
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     channel.postMessage(message);
     channel.close();
   }, [spec]);

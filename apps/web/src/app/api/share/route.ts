@@ -50,7 +50,7 @@ const consumeRateLimit = (ip: string): boolean => {
  */
 const baseOriginFor = (req: Request): string => {
   if (share.publicBaseUrl !== undefined && share.publicBaseUrl !== '') {
-    return share.publicBaseUrl.replace(/\/$/, '');
+    return share.publicBaseUrl.replace(/\/$/u, '');
   }
   const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
   const host =
@@ -105,7 +105,7 @@ export const POST = async (req: Request) => {
     try {
       // Retry must be sequential — each attempt depends on whether the
       // previous write succeeded. `Promise.all` does not apply here.
-      // oxlint-disable-next-line eslint(no-await-in-loop)
+      // oxlint-disable-next-line no-await-in-loop
       await putSnapshot({
         ...parsed.data,
         id,

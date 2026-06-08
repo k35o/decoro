@@ -132,23 +132,23 @@ export const ConversationsSidebar = ({
         <IconButton
           label="New conversation"
           size="sm"
-          bg="transparent"
+          color="transparent"
           onAction={onNewConversation}
         >
           <PlusIcon size="sm" />
         </IconButton>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 overflow-y-auto p-2">
         {state.kind === 'loading' ? (
           <div className="flex items-center justify-center py-6">
             <Spinner size="sm" />
           </div>
         ) : state.kind === 'error' ? (
-          <p className="text-fg-mute px-2 py-2 text-xs" role="alert">
+          <p className="text-fg-mute p-2 text-xs" role="alert">
             {state.message}
           </p>
         ) : state.conversations.length === 0 ? (
-          <p className="text-fg-mute px-2 py-2 text-xs">
+          <p className="text-fg-mute p-2 text-xs">
             No saved conversations yet.
           </p>
         ) : (
@@ -179,7 +179,7 @@ export const ConversationsSidebar = ({
                           <Spinner size="sm" />
                         </span>
                       ) : null}
-                      <span className="line-clamp-2 break-words">
+                      <span className="line-clamp-2 wrap-break-word">
                         {c.title}
                       </span>
                     </span>
@@ -188,7 +188,7 @@ export const ConversationsSidebar = ({
                     <IconButton
                       label="Delete conversation"
                       size="sm"
-                      bg="transparent"
+                      color="transparent"
                       onAction={() => {
                         void onDelete(c.id);
                       }}

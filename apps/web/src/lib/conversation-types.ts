@@ -20,7 +20,7 @@ import { MAX_MESSAGES, specSchema } from './spec-schema.ts';
  * without caring whether it's a share or a conversation; the routes
  * separate the namespaces.
  */
-export const CONVERSATION_ID_PATTERN = /^[A-Za-z0-9_-]{12}$/;
+export const CONVERSATION_ID_PATTERN = /^[A-Za-z0-9_-]{12}$/u;
 
 export const newConversationId = (): string => {
   const bytes = new Uint8Array(9);

@@ -10,17 +10,14 @@
     "test": "vp test --run",
     "typecheck": "tsc --noEmit",
     "check": "vp check",
-    "check:write": "vp check --fix",
-    "generate:catalog": "node --experimental-strip-types scripts/generate-catalog.ts"
+    "check:write": "vp check --fix"
   },
   "dependencies": {
     "@decoro/adapter-spec": "workspace:^",
-    "@json-render/codegen": "catalog:",
     "@json-render/core": "catalog:",
     "@json-render/react": "catalog:",
     "@k8o/arte-odyssey": "catalog:",
-    "react": "catalog:",
-    "zod": "catalog:"
+    "react": "catalog:"
   },
   "devDependencies": {
     "@types/react": "catalog:",

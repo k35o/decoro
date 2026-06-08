@@ -128,7 +128,7 @@ export const ShareButton = ({ spec, messages, isStreaming }: Props) => {
       ) : null}
       <Button
         size="sm"
-        variant="outlined"
+        variant="outline"
         color="gray"
         disabled={disabled}
         onAction={onShare}

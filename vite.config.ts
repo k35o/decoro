@@ -18,7 +18,13 @@ export default defineConfig({
       reportUnusedDisableDirectives: 'error',
     },
     settings: {
-      react: { version: '19.2.5' },
+      react: { version: '19.2.7' },
+      // oxlint-tailwindcss v1 requires the Tailwind entry CSS so it can
+      // resolve the theme / which utilities are valid. Only apps/web uses
+      // Tailwind, so a single entry point covers the monorepo.
+      tailwindcss: {
+        entryPoint: 'apps/web/src/app/globals.css',
+      },
     },
     overrides: [
       {

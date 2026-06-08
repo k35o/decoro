@@ -23,7 +23,7 @@ export const PreviewPopoutButton = () => (
   <IconButton
     label="Open preview in a new window"
     size="sm"
-    bg="transparent"
+    color="transparent"
     onAction={openPreviewPopout}
   >
     <ExternalLinkIcon size="sm" />
