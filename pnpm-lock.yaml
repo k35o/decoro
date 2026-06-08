@@ -13,8 +13,8 @@ catalogs:
       specifier: 0.19.0
       version: 0.19.0
     '@k8o/arte-odyssey':
-      specifier: 10.0.1
-      version: 10.0.1
+      specifier: 10.1.0
+      version: 10.1.0
     '@tailwindcss/postcss':
       specifier: 4.3.0
       version: 4.3.0
@@ -100,7 +100,7 @@ importers:
         version: 0.19.0(react@19.2.7)(zod@4.4.3)
       '@k8o/arte-odyssey':
         specifier: 'catalog:'
-        version: 10.0.1(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)
+        version: 10.1.0(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)
       ai:
         specifier: 6.0.197
         version: 6.0.197(zod@4.4.3)
@@ -164,7 +164,7 @@ importers:
         version: 0.19.0(react@19.2.7)(zod@4.4.3)
       '@k8o/arte-odyssey':
         specifier: 'catalog:'
-        version: 10.0.1(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)
+        version: 10.1.0(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -996,8 +996,8 @@ packages:
     peerDependencies:
       react: ^19.2.3
 
-  '@k8o/arte-odyssey@10.0.1':
-    resolution: {integrity: sha512-lpPQ8FAEaS11A8DNtPWxgWKQaHX+3jelLhNZ3ChnOVfNxBks+jlXIAuts2Wn1M7G69aShSfwDGj5X6jTiKDtVQ==}
+  '@k8o/arte-odyssey@10.1.0':
+    resolution: {integrity: sha512-2NX3mDlg4oqASKcWXS3LBpsgw+0blOIGOxHlA0WQ3QckAb1BH9ZHgFPl+QPeJEdhwz9PHDmjFEc6YZ00oRRT6Q==}
     peerDependencies:
       '@json-render/core': '>=0.19.0'
       '@json-render/react': '>=0.19.0'
@@ -3264,7 +3264,7 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@k8o/arte-odyssey@10.0.1(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)':
+  '@k8o/arte-odyssey@10.1.0(@json-render/core@0.19.0(zod@4.4.3))(@json-render/react@0.19.0(react@19.2.7)(zod@4.4.3))(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)(typescript@6.0.3)(zod@4.4.3)':
     dependencies:
       '@floating-ui/react': 0.27.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@types/react': 19.2.16
