@@ -12,6 +12,7 @@ import type { AdapterMetadata } from '@decoro/adapter-spec';
 const promptGuidance = [
   'Layout (ArteOdyssey-specific):',
   '- Compose layout with `Stack` (direction / gap) and `Grid`. There are NO raw HTML layout elements (div/section/…) and NO `className` prop — do not invent them.',
+  '- Give content breathing room: wrap a container\'s children in a `Stack` with a `gap` (e.g. `gap: "md"`) instead of stacking them flush — including inside `Card`. Don\'t pack elements edge-to-edge.',
   '',
   'Text (ArteOdyssey-specific):',
   "- Put copy in each component's own text prop (e.g. `Button.label`, `Alert.message`, `Tooltip.text`, `Code.code`, tab / table cell strings). `children` are references to other catalog elements, never raw strings.",
