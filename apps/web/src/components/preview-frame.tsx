@@ -12,7 +12,7 @@ export const PreviewFrame = () => (
   // The iframe exists for style-space isolation (ADR-006), not for security
   // sandboxing — both sides are first-party Decoro routes, so an HTML
   // sandbox would only obstruct messaging without buying anything.
-  // oxlint-disable-next-line eslint-plugin-react(iframe-missing-sandbox)
+  // oxlint-disable-next-line react/iframe-missing-sandbox
   <iframe
     src="/preview"
     title="Decoro preview"

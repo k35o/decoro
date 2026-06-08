@@ -90,7 +90,7 @@ export const ChatPane = ({ messages, isStreaming, error, onSubmit }: Props) => {
             )}
             {error ? (
               <li>
-                <Alert status="error" message={error.message} />
+                <Alert tone="error" message={error.message} />
               </li>
             ) : null}
           </ul>
@@ -147,6 +147,7 @@ const EmptyState = ({ onPick }: { onPick: (text: string) => void }) => (
         <li key={example}>
           <button
             type="button"
+            aria-label={example}
             onClick={() => {
               onPick(example);
             }}

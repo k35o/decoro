@@ -2,7 +2,7 @@
 // include this module in client code. The job store is a per-process
 // in-memory map with subscriber callbacks; client bundling would only
 // confuse the React tree.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import type { StreamEvent } from './stream-events.ts';
 

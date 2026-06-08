@@ -1,308 +1,79 @@
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+import type { Adapter } from '@decoro/adapter-spec';
+import {
+  findUncoveredComponents,
+  renderViaJsonRender,
+} from '@decoro/adapter-spec';
+import type { Spec } from '@json-render/core';
 
-import { isAllowedClassName } from './class-name-allowlist.ts';
-import { arteOdysseyAdapter } from './index.ts';
+import { arteOdysseyAdapter, catalog, metadata, registry } from './index.ts';
 
-const fakeRenderProps = <P,>(element: { type: string; props: P }) => ({
-  element: { key: 'k1', children: [], visible: undefined, ...element },
-  emit: () => {},
-  on: () => ({
-    shouldPreventDefault: false,
-    bound: false,
-    emit: () => {},
-  }),
-});
+const run = (spec: Spec) =>
+  renderViaJsonRender(spec, arteOdysseyAdapter.registryModule);
 
 describe('adapter-arte-odyssey', () => {
-  it('exposes Button and Card in the registry', () => {
-    expect(arteOdysseyAdapter.registry).toHaveProperty('Button');
-    expect(arteOdysseyAdapter.registry).toHaveProperty('Card');
+  it('re-exports arte-odyssey first-party catalog with the expected components', () => {
+    const names = catalog.componentNames;
+    // A representative slice of the first-party catalog
+    // (`@k8o/arte-odyssey/json-render`).
+    for (const name of ['Stack', 'Grid', 'Button', 'Card', 'Alert', 'Tabs']) {
+      expect(names).toContain(name);
+    }
   });
 
-  it('declares the import path used by code generation', () => {
-    expect(arteOdysseyAdapter.codeOutput.importPath).toBe('@k8o/arte-odyssey');
+  it('exposes a registry renderer for every catalog component', () => {
+    expect(findUncoveredComponents(catalog, registry)).toEqual([]);
   });
 
-  it('generates empty string for an empty spec', () => {
-    expect(
-      arteOdysseyAdapter.codeOutput.generate({ root: '', elements: {} }),
-    ).toBe('');
+  it('describes itself via metadata', () => {
+    expect(metadata.name).toBe('@k8o/arte-odyssey');
+    expect(metadata.displayName).toBe('ArteOdyssey');
+    expect(metadata.version).toBe('10.0.0');
   });
 
-  it('generates valid TSX for a Card containing a Button', () => {
-    const tsx = arteOdysseyAdapter.codeOutput.generate({
-      root: 'card-1',
-      elements: {
-        'card-1': {
-          type: 'Card',
-          props: { appearance: 'shadow' },
-          children: ['btn-1'],
-        },
-        'btn-1': {
-          type: 'Button',
-          props: {
-            label: 'Save',
-            color: 'primary',
-            variant: 'contained',
-            type: null,
-            size: null,
-            fullWidth: null,
-            disabled: null,
-          },
-          children: [],
-        },
-      },
+  it('registryModule resolves to the exact registry the adapter renders with', async () => {
+    // Not a tautology against the literal: actually import the specifier and
+    // assert the named export IS the registry object — so a typo'd specifier
+    // (module-not-found) or wrong exportName (undefined) fails here, at test
+    // time, instead of in a user's copied output. renderViaJsonRender is the
+    // sole consumer of registryModule.
+    const { specifier, exportName } = arteOdysseyAdapter.registryModule;
+    const mod = (await import(specifier)) as Record<string, unknown>;
+    expect(mod[exportName]).toBe(registry);
+  });
+
+  it('has no bespoke codeOutput (uses the generic Renderer fallback)', () => {
+    const asContract: Adapter = arteOdysseyAdapter;
+    expect(asContract.codeOutput).toBeUndefined();
+  });
+
+  describe('generic code output (renderViaJsonRender)', () => {
+    it('returns empty string for an empty / unresolved spec', () => {
+      expect(run({ root: '', elements: {} })).toBe('');
+      expect(run({ root: 'missing', elements: {} })).toBe('');
     });
-    expect(tsx).toContain("import { Button, Card } from '@k8o/arte-odyssey';");
-    expect(tsx).toContain('export const GeneratedComponent');
-    expect(tsx).toContain('<Card appearance="shadow">');
-    expect(tsx).toContain(
-      '<Button color="primary" variant="contained">{"Save"}</Button>',
-    );
-    expect(tsx).toContain('</Card>');
-  });
 
-  it('emits Text as a JSX string-literal expression with no extra import', () => {
-    const tsx = arteOdysseyAdapter.codeOutput.generate({
-      root: 'h',
-      elements: {
-        h: {
-          type: 'Heading',
-          props: { type: 'h2' },
-          children: ['t'],
-        },
-        t: {
-          type: 'Text',
-          props: { content: 'サインイン & "認証"' },
-          children: [],
-        },
-      },
-    });
-    expect(tsx).toContain('<Heading type="h2">');
-    // String literal escapes JSX-significant characters via JSON.stringify.
-    expect(tsx).toContain('{"サインイン & \\"認証\\""}');
-    expect(tsx).toContain('</Heading>');
-    // `Text` is a meta-type — should NOT show up in the import line.
-    expect(tsx).not.toContain(' Text ');
-    expect(tsx).not.toContain(', Text,');
-    expect(tsx).not.toContain('{ Text,');
-    expect(tsx).not.toContain(', Text }');
-  });
-
-  it('emits Icon as the named ArteOdyssey component and adds it to the import line', () => {
-    const tsx = arteOdysseyAdapter.codeOutput.generate({
-      root: 'btn',
-      elements: {
-        btn: {
-          type: 'IconButton',
-          props: { label: 'History', size: null, bg: null },
-          children: ['ic'],
-        },
-        ic: {
-          type: 'Icon',
-          props: { name: 'HistoryIcon', size: 'sm' },
-          children: [],
-        },
-      },
-    });
-    // Import line lists the actual icon component, not the meta `Icon` type.
-    expect(tsx).toContain(
-      "import { HistoryIcon, IconButton } from '@k8o/arte-odyssey';",
-    );
-    expect(tsx).not.toContain(', Icon,');
-    expect(tsx).not.toContain(', Icon }');
-    expect(tsx).not.toContain('{ Icon,');
-    // Body emits the icon component directly inside the IconButton.
-    expect(tsx).toContain('<HistoryIcon size="sm" />');
-  });
-
-  it('strips props the catalog schema does not declare (e.g. className on Card)', () => {
-    // Regression: the LLM occasionally hallucinates `className` on
-    // ArteOdyssey components like Card / Button that don't accept it,
-    // producing TSX that fails to compile when pasted into a real codebase.
-    // Codegen runs every element's props through its catalog schema before
-    // serialising; Zod's default safeParse drops unknown keys.
-    const tsx = arteOdysseyAdapter.codeOutput.generate({
-      root: 'card-1',
-      elements: {
-        'card-1': {
-          type: 'Card',
-          props: {
-            width: 'fit',
-            appearance: 'shadow',
-            className: 'p-6 max-w-sm mx-auto my-12',
-          },
-          children: [],
-        },
-      },
-    });
-    expect(tsx).not.toContain('className=');
-    expect(tsx).toContain('<Card width="fit" appearance="shadow" />');
-  });
-
-  it('throws on a spec containing an unknown component type', () => {
-    expect(() =>
-      arteOdysseyAdapter.codeOutput.generate({
-        root: 'unknown',
+    it('emits a self-contained <Renderer> wrapper that re-uses the library registry', () => {
+      const tsx = run({
+        root: 'btn',
         elements: {
-          unknown: { type: 'NotInCatalog', props: {}, children: [] },
-        },
-      }),
-    ).toThrow(/missing formatter for "NotInCatalog"/);
-  });
-
-  it('throws on a spec with a cycle in the children graph', () => {
-    expect(() =>
-      arteOdysseyAdapter.codeOutput.generate({
-        root: 'a',
-        elements: {
-          a: { type: 'Card', props: {}, children: ['b'] },
-          b: { type: 'Card', props: {}, children: ['a'] },
-        },
-      }),
-    ).toThrow(/cycle detected/);
-  });
-
-  it('escapes JSX-significant characters in Button labels', () => {
-    const tsx = arteOdysseyAdapter.codeOutput.generate({
-      root: 'btn',
-      elements: {
-        btn: {
-          type: 'Button',
-          props: {
-            label: 'Save & Close <"now">',
-            color: null,
-            variant: null,
-            type: null,
-            size: null,
-            fullWidth: null,
-            disabled: null,
-          },
-          children: [],
-        },
-      },
-    });
-    // Wrapped in a JSX expression with a JS string literal — valid TSX even
-    // though the label contains `<`, `&`, `>`, and quotes.
-    expect(tsx).toContain('<Button>{"Save & Close <\\"now\\">"}</Button>');
-  });
-
-  it('renders Card via the registry', () => {
-    const CardRenderer = arteOdysseyAdapter.registry['Card']!;
-    const html = renderToStaticMarkup(
-      createElement(
-        CardRenderer,
-        fakeRenderProps({ type: 'Card', props: {} }),
-        'hello world',
-      ),
-    );
-    expect(html).toContain('hello world');
-  });
-
-  it('renders Button via the registry', () => {
-    const ButtonRenderer = arteOdysseyAdapter.registry['Button']!;
-    const html = renderToStaticMarkup(
-      createElement(
-        ButtonRenderer,
-        fakeRenderProps({
-          type: 'Button',
-          props: {
-            label: 'Submit',
-            type: null,
-            size: null,
-            color: null,
-            variant: null,
-            fullWidth: null,
-            disabled: null,
-          },
-        }),
-      ),
-    );
-    expect(html).toContain('Submit');
-  });
-
-  describe('layout HTML elements (ADR-012)', () => {
-    it('exposes div / section / header / main in the registry', () => {
-      expect(arteOdysseyAdapter.registry).toHaveProperty('div');
-      expect(arteOdysseyAdapter.registry).toHaveProperty('section');
-      expect(arteOdysseyAdapter.registry).toHaveProperty('header');
-      expect(arteOdysseyAdapter.registry).toHaveProperty('main');
-    });
-
-    it('renders div via the registry with a passed className', () => {
-      const DivRenderer = arteOdysseyAdapter.registry['div']!;
-      const html = renderToStaticMarkup(
-        createElement(
-          DivRenderer,
-          fakeRenderProps({
-            type: 'div',
-            props: { className: 'flex flex-col gap-4' },
-          }),
-          'pane',
-        ),
-      );
-      expect(html).toBe('<div class="flex flex-col gap-4">pane</div>');
-    });
-
-    it('emits HTML elements verbatim in generated TSX (no import line)', () => {
-      const tsx = arteOdysseyAdapter.codeOutput.generate({
-        root: 'shell',
-        elements: {
-          shell: {
-            type: 'div',
-            props: { className: 'flex flex-col gap-4 p-6' },
-            children: ['btn'],
-          },
           btn: {
             type: 'Button',
-            props: {
-              label: 'Save',
-              type: null,
-              size: null,
-              color: null,
-              variant: null,
-              fullWidth: null,
-              disabled: null,
-            },
+            props: { label: 'Save', tone: 'primary' },
             children: [],
           },
         },
       });
-      // Only ArteOdyssey components (Button) belong in the import line; div
-      // is native HTML and stays out of it.
-      expect(tsx).toContain("import { Button } from '@k8o/arte-odyssey';");
-      expect(tsx).not.toContain(', div');
-      expect(tsx).not.toContain('div }');
-      expect(tsx).toContain('<div className="flex flex-col gap-4 p-6">');
-      expect(tsx).toContain('</div>');
-    });
-
-    it('emits a self-closing tag when className is null and there are no children', () => {
-      const tsx = arteOdysseyAdapter.codeOutput.generate({
-        root: 'spacer',
-        elements: {
-          spacer: { type: 'section', props: { className: null }, children: [] },
-        },
-      });
-      expect(tsx).toContain('<section />');
-    });
-  });
-
-  describe('className allowlist (ADR-012)', () => {
-    it('accepts curated layout utilities', () => {
-      expect(isAllowedClassName('flex')).toBe(true);
-      expect(isAllowedClassName('flex flex-col gap-4 p-6')).toBe(true);
-      expect(isAllowedClassName('w-full bg-bg-base text-fg-base')).toBe(true);
-      expect(isAllowedClassName('  flex   gap-2  ')).toBe(true);
-      expect(isAllowedClassName('')).toBe(true);
-    });
-
-    it('rejects raw palette / arbitrary / off-token utilities', () => {
-      expect(isAllowedClassName('bg-red-500')).toBe(false);
-      expect(isAllowedClassName('text-9xl')).toBe(false);
-      expect(isAllowedClassName('gap-[37px]')).toBe(false);
-      expect(isAllowedClassName('flex bg-red-500')).toBe(false);
+      expect(tsx).toContain("'use client';");
+      expect(tsx).toContain(
+        "import { JSONUIProvider, Renderer } from '@json-render/react';",
+      );
+      expect(tsx).toContain(
+        "import { registry } from '@k8o/arte-odyssey/json-render/registry';",
+      );
+      expect(tsx).toContain('<Renderer registry={registry} spec={spec} />');
+      // The spec is inlined verbatim so the generated component is self-contained.
+      expect(tsx).toContain('"type": "Button"');
+      expect(tsx).toContain('"label": "Save"');
     });
   });
 });

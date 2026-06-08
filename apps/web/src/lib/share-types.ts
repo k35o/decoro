@@ -15,7 +15,7 @@ import { MAX_MESSAGES, specSchema } from './spec-schema.ts';
  * outside the API.
  */
 
-export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{12}$/;
+export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{12}$/u;
 
 /**
  * Lightweight URL-safe id (12 chars, ~71 bits of entropy). Short enough that

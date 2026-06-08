@@ -16,16 +16,16 @@
     "migrate:from-fs": "tsx src/lib/db/migrate-from-fs.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "3.0.71",
+    "@ai-sdk/anthropic": "3.0.81",
     "@decoro/adapter-arte-odyssey": "workspace:^",
     "@decoro/adapter-spec": "workspace:^",
     "@decoro/llm-config": "workspace:^",
     "@json-render/core": "catalog:",
     "@json-render/react": "catalog:",
     "@k8o/arte-odyssey": "catalog:",
-    "ai": "6.0.168",
+    "ai": "6.0.197",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.4",
+    "next": "16.2.7",
     "postgres": "3.4.9",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -35,11 +35,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",
-    "@types/node": "24.12.2",
+    "@types/node": "25.9.1",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "drizzle-kit": "0.31.10",
     "postcss": "catalog:",
-    "tsx": "4.21.0"
+    "tsx": "4.22.4"
   }
 }

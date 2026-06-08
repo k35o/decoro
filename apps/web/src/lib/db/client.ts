@@ -1,7 +1,7 @@
 // `server-only` is a side-effect import that makes the bundler refuse to
 // include this module in client code. The Postgres driver and connection
 // string are server-side only.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';

@@ -1,7 +1,7 @@
 // `server-only` is a side-effect import that makes the bundler refuse
 // to include this module in client code. The job calls `streamText`
 // with server credentials and writes to the DB.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import { createModel } from '@decoro/llm-config';
 import {
@@ -66,9 +66,6 @@ const systemPrompt = [
   responsePreambleInstruction,
 ].join('\n');
 
-const isMeaningfulSpec = (spec: Spec): boolean =>
-  spec.root !== '' && Object.keys(spec.elements).length > 0;
-
 const buildLlmMessages = (
   messages: ChatMessage[],
   inputSpec: Spec,
@@ -86,7 +83,10 @@ const buildLlmMessages = (
     ...last,
     content: buildUserPrompt({
       prompt: last.content,
-      currentSpec: isMeaningfulSpec(inputSpec) ? inputSpec : undefined,
+      // `buildUserPrompt` guards `currentSpec` with json-render's own
+      // `isNonEmptySpec`, so pass the seed straight through — one definition
+      // of "empty spec", owned by the library.
+      currentSpec: inputSpec,
     }),
   };
   return llmMessages;

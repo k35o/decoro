@@ -68,7 +68,7 @@ const main = async () => {
     const path = join(SHARES_DIR, name);
     let raw: string;
     try {
-      // oxlint-disable-next-line eslint(no-await-in-loop)
+      // oxlint-disable-next-line no-await-in-loop
       raw = await readFile(path, 'utf8');
     } catch (err) {
       console.error(`[migrate-from-fs] read failed for ${name}:`, err);
@@ -97,7 +97,7 @@ const main = async () => {
       // Sequential awaits — INSERTs are quick, dataset is small (dozens
       // of dogfood snapshots at most), and parallelizing would only make
       // the failure log harder to read.
-      // oxlint-disable-next-line eslint(no-await-in-loop)
+      // oxlint-disable-next-line no-await-in-loop
       await db.insert(schema.shares).values({
         id: record.id,
         createdAt: new Date(record.createdAt),

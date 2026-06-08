@@ -3,7 +3,7 @@
 // `node:child_process` is unavailable in the browser, and a stray client
 // import would otherwise produce a confusing build error far from the
 // real cause.
-// oxlint-disable-next-line eslint-plugin-import(no-unassigned-import)
+// oxlint-disable-next-line import/no-unassigned-import
 import 'server-only';
 import { spawn } from 'node:child_process';
 
@@ -239,7 +239,7 @@ const createClaudeStream = (
         // where to look.
         const detail = stderr.trim() || buffer.trim();
         const hint =
-          detail === '' || /not logged in/i.test(detail)
+          detail === '' || /not logged in/iu.test(detail)
             ? ' (claude is unauthenticated in this process — try `claude setup-token` and export CLAUDE_CODE_OAUTH_TOKEN in .env.local)'
             : '';
         finalize(
@@ -281,7 +281,7 @@ export const createSubprocessClaude = (
         // Sequential await is required: chunks arrive in order from the
         // subprocess stream, and we need each one before deciding what to
         // do with it. Promise.all wouldn't apply.
-        // oxlint-disable-next-line eslint(no-await-in-loop)
+        // oxlint-disable-next-line no-await-in-loop
         const { value, done } = await reader.read();
         if (done) break;
         if (value.type === 'text-delta') text += value.delta;

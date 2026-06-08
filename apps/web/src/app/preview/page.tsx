@@ -30,7 +30,7 @@ const PreviewPage = () => {
     const ready: PreviewReadyMessage = { type: 'decoro:ready' };
     // BroadcastChannel.postMessage takes only the message; the lint
     // rule's targetOrigin requirement applies to window.postMessage.
-    // oxlint-disable-next-line eslint-plugin-unicorn(require-post-message-target-origin)
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     channel.postMessage(ready);
 
     return () => {
